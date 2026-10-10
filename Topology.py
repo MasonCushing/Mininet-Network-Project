@@ -8,7 +8,7 @@ from mininet.link import TCLink
 
 
 def myNetwork():
-
+# All of this topology was created via minedit a software that comes with the mininet package it exports the network topology as a python file none of this was written by us 
     net = Mininet(
         topo=None,
         build=False,

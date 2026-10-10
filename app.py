@@ -9,7 +9,7 @@ net = None
 
 # Displays the Topo and Gets it 
 
-def get_node_type(name):
+def get_node_type(name): #finds what each node type is 
     if re.fullmatch(r'r\d+', name):
         return 'router'
     if re.fullmatch(r's\d+', name):
@@ -19,7 +19,7 @@ def get_node_type(name):
     return 'other'
 
 
-def get_topology():
+def get_topology(): # converts mininet topo into the cytoscape form 
     nodes = []
     edges = []
 
@@ -49,24 +49,27 @@ def get_topology():
 #Start Of Monitoring ps pretty sure this doesnt work
 
 def read_host(h): 
+    return{ 
     'data': { 
         'name': h.name,
         'ip': h.IP(),
         'Mac': h.MAC(),
-    }
+    } } 
 
 def read_switch(s):
+    return{ 
     'data': {
         'name': s.name,
         'bytes' : s.dpctl('dump-ports'),
 
-    }
+    }} 
 
 def read_edges(e):
+    return{ 
     'data':{
         'up/down': net.configLinkStatus('s1', 'h1', 'down');
         'dropS' : 	s.cmd('tc -s qdisc show dev s1-eth1')
-    }
+    } }
 
 #Running
 @app.route('/')

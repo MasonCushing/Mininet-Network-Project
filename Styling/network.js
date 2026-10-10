@@ -1,15 +1,15 @@
-let cy;
+let cy; //Variables
 let selectedNode = null; 
 let selectedEdge = null;
 
-async function loadTopology() {
+async function loadTopology() { // Creates and loads the topoloy by retreiving it from Topology.py 
     const response = await fetch('/api/topology');
 
     if (!response.ok) {
         throw new Error('Could not load network topology');
     }
 
-    const topology = await response.json();
+    const topology = await response.json(); //await makes something finish before moving on
 
     cy = cytoscape({
         container: document.getElementById('network'),
@@ -19,7 +19,7 @@ async function loadTopology() {
             ...topology.edges
         ],
 
-        style: [
+        style: [ //anything in this section is just for looks ajust if you like 
             {
                 selector: 'node',
                 style: {
@@ -60,8 +60,10 @@ async function loadTopology() {
             name: 'cose',
             animate: false,
             padding: 35
-        }
+        } // end of styling 
     });
+
+    setupEvents(); //event grabber running so when you click things nodes and edges id are saved i think
 
     document.getElementById('network-status').textContent = 'Network loaded';
 }
@@ -80,12 +82,12 @@ function setupEvents(){
         cy.on('tap', 'node', evt => {  /* when a node is clicked it runs the function */
             selectedNode = evt.target.id(); /*gets a nodes id puts it in a string selected nodes*/
             selectedEdge = null; /*Removes the edge if previously picked so were not saving multiple points at once */
-            console.log('node', selectedNode);  /**/
+            console.log('node', selectedNode);
         }); 
     
         cy.on('tap', 'edge', evt => {
-            selectedEdge = evt.target.id();
-            selectedNode = null; 
+            selectedEdge = evt.target.id(); //basically the same idea as the one above this one 
+            selectedNode = null;  
             console.log(selectedEdge)
         }); 
 
