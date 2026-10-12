@@ -45,32 +45,6 @@ def get_topology(): # converts mininet topo into the cytoscape form
 
 # End of diplaying the Topo
 
-
-#Start Of Monitoring ps pretty sure this doesnt work
-
-def read_host(h): 
-    return{ 
-    'data': { 
-        'name': h.name,
-        'ip': h.IP(),
-        'Mac': h.MAC(),
-    } } 
-
-def read_switch(s):
-    return{ 
-    'data': {
-        'name': s.name,
-        'bytes' : s.dpctl('dump-ports'),
-
-    }} 
-
-def read_edges(e):
-    return{ 
-    'data':{
-        'up/down': net.configLinkStatus('s1', 'h1', 'down');
-        'dropS' : 	s.cmd('tc -s qdisc show dev s1-eth1')
-    } }
-
 #Running
 @app.route('/')
 def index():
