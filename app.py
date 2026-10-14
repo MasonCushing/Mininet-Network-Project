@@ -2,6 +2,7 @@ from flask import Flask, jsonify, render_template
 from Topology import myNetwork
 from mininet.log import setLogLevel
 import re
+import snmp_monitor
 
 app = Flask(__name__, template_folder='Gui', static_folder='Styling')
 
@@ -55,14 +56,23 @@ def index():
 def topology():
     return jsonify(get_topology())
 
+@app.route('/api/stats/<name>') 
+def node_stats(name):
+    node = net.nameToNode.get(name)
+    if node is None or node not in net.hosts: # switches have no snmp agent
+        return jsonify({'error': f'no snmp agent on {name}'}), 404
+    return jsonify(snmp_monitor.get_node_stats(node))
+
 
 if __name__ == '__main__':
     setLogLevel('info')
     net = myNetwork()
+    snmp_monitor.start_agents(net)
 
     try:
         app.run(host='0.0.0.0', port=5000, debug=False)
     finally:
+        snmp_monitor.stop_agents(net)
         net.stop()
 
         

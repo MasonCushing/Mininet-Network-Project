@@ -1,6 +1,7 @@
 let cy; //Variables
 let selectedNode = null; 
 let selectedEdge = null;
+let statsTimer = null;
 
 async function loadTopology() { // Creates and loads the topoloy by retreiving it from Topology.py 
     const response = await fetch('/api/topology');
@@ -77,24 +78,47 @@ document.addEventListener('DOMContentLoaded', () => {
 
 });
 
+async function showNodeStats(id) {
+    const panel = document.getElementById('stats-panel');
+    const response = await fetch('/api/stats/' + id);
+    if (!response.ok) { panel.textContent = id + ': no SNMP agent'; return; }
+    const s = await response.json();
+    panel.innerHTML = '<b>' + s.name + '</b> (' + s.type + ')<br>' +
+        'Interfaces: ' + s.interfaces.join(', ') + '<br>' +
+        'Bytes in/out: ' + s.bytes_in + ' / ' + s.bytes_out + '<br>' +
+        'Packets in/out: ' + s.packets_in + ' / ' + s.packets_out + '<br>' +
+        'Errors in/out: ' + s.errors_in + ' / ' + s.errors_out;
+}
+
 function setupEvents(){
         /* Saves node on click for dynamic on click stuff*/ 
         cy.on('tap', 'node', evt => {  /* when a node is clicked it runs the function */
             selectedNode = evt.target.id(); /*gets a nodes id puts it in a string selected nodes*/
             selectedEdge = null; /*Removes the edge if previously picked so were not saving multiple points at once */
             console.log('node', selectedNode);
+            showNodeStats(selectedNode); 
+           
+            clearInterval(statsTimer); // allows me to refresh node stats fixes a bug where my node details didnt function properly
+            statsTimer = setInterval(() => {
+                if (selectedNode) {
+                    showNodeStats(selectedNode);
+                }
+            }, 2000);
+
         }); 
     
         cy.on('tap', 'edge', evt => {
             selectedEdge = evt.target.id(); //basically the same idea as the one above this one 
             selectedNode = null;  
             console.log(selectedEdge)
+            clearInterval(statsTimer);
         }); 
 
         cy.on('tap', evt => {
             if (evt.target === cy) {
                 selectedNode = null; // removes saved varibales on click on anything other then a node and edge
                 selectedEdge = null;
+                clearInterval(statsTimer);
             }
         });
 
