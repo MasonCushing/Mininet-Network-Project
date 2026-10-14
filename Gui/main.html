@@ -7,6 +7,7 @@
 
     <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
 
+
     <script src="https://unpkg.com/cytoscape/dist/cytoscape.min.js"></script>
 </head>
 
@@ -16,7 +17,8 @@
     <main>
         <div class = "network-page">
             <div class = "header">
-                <h1>Network Monitor Intelligent Traffic Engineering and QoS</h1>
+                <img src="{{ url_for('static', filename='icons/hexagonal-tech-logo.svg') }}" class = "logo">
+                <h1 class = "logo-text">Network Monitor Intelligent Traffic Engineering and QoS</h1>
             </div>
 
             <div class = "sidebar"> </div>
@@ -24,7 +26,38 @@
             <section class="network-section">
                         <h2>Network Topology</h2>
                         <div id="network"></div>
-                </section>
+            </section>
+
+
+            <div class="key">
+                <p class="Summary">Network Summary</p>
+            
+                <div class="summary-box">
+                    <img src="{{ url_for('static', filename='icons/host-device.svg') }}" class="host-img">
+                    <p class="host">Hosts: 57</p>
+                </div>
+            
+                <div class="summary-box">
+                    <img src="{{ url_for('static', filename='icons/router-icon.svg') }}" class="router-img">
+                    <p class="routers">Routers: 3</p>
+                </div>
+            
+                <div class="summary-box">
+                    <img src="{{ url_for('static', filename='icons/server-rack.svg') }}" class="switch-icon">
+                    <p class="Switches">Switches: 9</p>
+                </div>
+
+                <div class="summary-box">
+                    <img src="{{ url_for('static', filename='icons/connected-devices-card.svg') }}" class="link-icons">
+                    <p class="links">Links: 65</p>
+                </div>
+            </div>
+            
+
+            <div class = "network-performance"> 
+                <p>Network Overall Performance</p>
+            </div>
+
 
             <div class = "details-block">
                 <aside class="details-section">
