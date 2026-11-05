@@ -3,6 +3,10 @@ from Topology import myNetwork
 from mininet.log import setLogLevel
 import re
 import snmp_monitor
+import traffic_controller 
+from network_performance import (measure_latency,measure_packet_loss, measure_throughput)
+
+
 
 app = Flask(__name__, template_folder='Gui', static_folder='Styling')
 
@@ -62,6 +66,19 @@ def node_stats(name):
     if node is None or node not in net.hosts: # switches have no snmp agent
         return jsonify({'error': f'no snmp agent on {name}'}), 404
     return jsonify(snmp_monitor.get_node_stats(node))
+
+@app.route('/api/traffic/stop', methods=['POST'])
+def traffic_stop():
+    with traffic.traffic_lock:
+        traffic.stop_traffic(net)
+    return jsonify({'status': 'stopped'})
+
+@app.route('/api/traffic/<level>', methods=['POST'])
+def traffic_start(level):
+    if level not in traffic.TRAFFIC_TYPES:
+        return jsonify({'error': 'unknown level'}), 400
+    traffic.start_traffic(net, level)
+    return jsonify({'status': 'started', 'level': level})
 
 
 if __name__ == '__main__':
