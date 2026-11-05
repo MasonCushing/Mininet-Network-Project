@@ -69,15 +69,15 @@ def node_stats(name):
 
 @app.route('/api/traffic/stop', methods=['POST'])
 def traffic_stop():
-    with traffic.traffic_lock:
-        traffic.stop_traffic(net)
+    with traffic_controller.traffic_lock:
+        traffic_controller.stop_traffic(net)
     return jsonify({'status': 'stopped'})
 
 @app.route('/api/traffic/<level>', methods=['POST'])
 def traffic_start(level):
-    if level not in traffic.TRAFFIC_TYPES:
+    if level not in traffic_controller.TRAFFIC_TYPES:
         return jsonify({'error': 'unknown level'}), 400
-    traffic.start_traffic(net, level)
+    traffic_controller.start_traffic(net, level)
     return jsonify({'status': 'started', 'level': level})
 
 

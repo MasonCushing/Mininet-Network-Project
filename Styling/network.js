@@ -123,3 +123,30 @@ function setupEvents(){
         });
 
 }
+
+// traffic handler front end link ai generated for testing purposes
+async function sendTraffic(url, label) { 
+    const status = document.getElementById('traffic-status');
+    status.textContent = 'Working...';
+    try {
+        const response = await fetch(url, { method: 'POST' });
+        if (!response.ok) throw new Error('HTTP ' + response.status);
+        status.textContent = label;
+    } catch (error) {
+        console.error(error);
+        status.textContent = 'Failed: ' + error.message;
+    }
+}
+
+document.addEventListener('DOMContentLoaded', () => {
+    document.querySelectorAll('.traffic-btn[data-level]').forEach(btn => {
+        btn.addEventListener('click', () => {
+            const level = btn.dataset.level;
+            sendTraffic('/api/traffic/' + level, level + ' traffic running');
+        });
+    });
+
+    document.getElementById('traffic-stop').addEventListener('click', () => {
+        sendTraffic('/api/traffic/stop', 'Traffic stopped');
+    });
+});
