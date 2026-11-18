@@ -144,10 +144,10 @@ async function sendTraffic(url, label) {
 }
 
 document.addEventListener('DOMContentLoaded', () => {
-    document.querySelectorAll('.traffic-btn[data-level]').forEach(btn => {
+    document.querySelectorAll('.traffic-btn[data-profile]').forEach(btn => {
         btn.addEventListener('click', () => {
-            const level = btn.dataset.level;
-            sendTraffic('/api/traffic/' + level, level + ' traffic running');
+            const profile = btn.dataset.profile;
+            sendTraffic('/api/traffic/' + profile, profile + ' traffic running');
         });
     });
 
