@@ -108,16 +108,15 @@ def node_stats(name):
 
 @app.route('/api/traffic/stop', methods=['POST'])
 def traffic_stop():
-    with traffic_controller.traffic_lock:
-        traffic_controller.stop_traffic(net)
+    traffic_controller.stop_traffic(net)
     return jsonify({'status': 'stopped'})
 
-@app.route('/api/traffic/<level>', methods=['POST'])
-def traffic_start(level):
-    if level not in traffic_controller.TRAFFIC_TYPES:
-        return jsonify({'error': 'unknown level'}), 400
-    traffic_controller.start_traffic(net, level)
-    return jsonify({'status': 'started', 'level': level})
+@app.route('/api/traffic/<profile>', methods=['POST'])
+def traffic_start(profile):
+    if profile not in traffic_controller.TRAFFIC_PROFILES:
+        return jsonify({'error': 'unknown traffic profile'}), 400
+    traffic_controller.start_traffic(net, profile)
+    return jsonify({'status': 'started', 'profile': profile})
 @app.route('/api/performance')
 def get_performance():
   if not performance_lock.acquire(blocking=False):

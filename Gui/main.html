@@ -62,9 +62,12 @@
             <div class = "network-performance"> 
                 <div class="traffic-controls">
                     <p>Traffic Generator</p>
-                    <button class="traffic-btn" data-level="low">Low</button>
-                    <button class="traffic-btn" data-level="medium">Medium</button>
-                    <button class="traffic-btn" data-level="high">High</button>
+                    <button class="traffic-btn" data-profile="voice">Voice (EF)</button>
+                    <button class="traffic-btn" data-profile="video">Video (AF41)</button>
+                    <button class="traffic-btn" data-profile="web">Web (Best Effort)</button>
+                    <button class="traffic-btn" data-profile="bulk">Bulk (CS1)</button>
+                    <button class="traffic-btn" data-profile="gaming">Gaming (CS5)</button>
+                    <button class="traffic-btn" data-profile="streaming">Streaming (AF31)</button>
                     <button class="traffic-btn stop" id="traffic-stop">Stop</button>
                     <span id="traffic-status"></span>
                 </div>
