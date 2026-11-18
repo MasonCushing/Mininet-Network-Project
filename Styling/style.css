@@ -115,3 +115,34 @@ body{
 .logo-text{
     display: inline-block;
 }
+.network-performance{
+    width:900px;
+    margin-top: 20px;
+    padding: 16px;
+    border: 2px solid #4c74be;
+    background-color: #023970;
+    border-radius:8px;
+    color:white;
+}
+.performance-grid{
+    display:grid;
+    grid-template-columns:1fr 1fr 1fr;
+    gap:15px;
+    margin-top:15px;
+}
+.metric-card{
+    padding:15px;
+    border:1px solid #4c74be;
+    border-radius: 8px;
+    background-color: #064780;
+    text-align: center;
+}
+.metric-card h3{
+    margin: 0;
+    font-size: 10px;
+}
+.metric-card p{
+    margin: 0;
+    font-size: 24px;
+    font-weight: bold;
+}
