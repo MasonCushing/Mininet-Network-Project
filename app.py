@@ -141,13 +141,17 @@ def get_performance():
 
 if __name__ == '__main__':
     setLogLevel('info')
-    net = myNetwork()
-    snmp_monitor.start_agents(net)
-
+    net = None
     try:
+        net = myNetwork()
+        snmp_monitor.start_agents(net)
         app.run(host='0.0.0.0', port=5000, debug=False)
     finally:
-        snmp_monitor.stop_agents(net)
-        net.stop()
+        if net is not None:
+            with traffic_controller.traffic_lock:
+                try:
+                    snmp_monitor.stop_agents(net)
+                finally:
+                    net.stop()
 
         

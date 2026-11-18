@@ -1,8 +1,8 @@
 import random
-import threading 
 from Topology import ROUTER_SWITCHES, SWITCH_HOST_IDS
+from mininet_command_lock import mininet_command_lock
 
-traffic_lock = threading.Lock() 
+traffic_lock = mininet_command_lock
 CONTINUOUS_DURATION = 2147483647
 
 TRAFFIC_PROFILES = {

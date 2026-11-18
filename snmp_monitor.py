@@ -1,9 +1,10 @@
-import os, re, threading
+import os, re
+from mininet_command_lock import mininet_command_lock
 
 SNMP_DIR = '/tmp/mn_snmp' #where agent confics and log files go so the nodes read and write here Tmp make data cleaned on end
 COMMUNITY = "public" # password to agents they wont lisen to request unless this is provided
 BASE_OID = '1.3.6.1.2.1.2.2.1' # the interface table, every column in OID_TABLE hangs off of this
-_lock = threading.Lock() # only one snmp command at a time since mininet's cmd() isnt safe to call from many threads at once
+_lock = mininet_command_lock # Mininet node shells accept only one command at a time
 OID_TABLE = {
     '2': 'interfaces', '6': 'mac', '8': 'status',
     '10': 'bytes_in', '11': 'packets_in', '14': 'errors_in',
@@ -18,12 +19,14 @@ def start_agents(net):
         with open(conf, 'w') as f:
             f.write('agentaddress udp:127.0.0.1:161\n') # only listen inside the nodes own namespace
             f.write(f'rocommunity {COMMUNITY} 127.0.0.1\n') # read only access with our passwor
-        node.cmd(f"snmpd -C -c {conf} -p {SNMP_DIR}/{node.name}.pid -Lf {SNMP_DIR}/{node.name}.log")
+        with _lock:
+            node.cmd(f"snmpd -C -c {conf} -p {SNMP_DIR}/{node.name}.pid -Lf {SNMP_DIR}/{node.name}.log")
 
 
 def stop_agents(net):
     for node in net.hosts:
-        node.cmd(f"[ -f {SNMP_DIR}/{node.name}.pid ] && kill $(cat {SNMP_DIR}/{node.name}.pid)")
+        with _lock:
+            node.cmd(f"[ -f {SNMP_DIR}/{node.name}.pid ] && kill $(cat {SNMP_DIR}/{node.name}.pid)")
 
 
 def walk(node, oid):
