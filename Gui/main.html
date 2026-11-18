@@ -26,6 +26,7 @@
             <section class="network-section">
                         <h2>Network Topology</h2>
                         <div id="network"></div>
+                        <p id="network-status">Loading Topology...</p>
             </section>
 
 
@@ -63,7 +64,23 @@
                     <button class="traffic-btn stop" id="traffic-stop">Stop</button>
                     <span id="traffic-status"></span>
                 </div>
-                <p>Network Overall Performance</p>
+                <h2>Network Overall Performance</h2>
+                <div class="performance-grid">
+                    <div class="metric-card">
+                        <h3>Latency </h3>
+                        <p id="latency">Loading...</p>
+                    </div>
+                    <div class="metric-card">
+                        <h3>Packet Loss </h3>
+                        <p id="packet-loss">Loading...</p>
+                    </div>  
+                    <div class="metric-card">
+                        <h3>Throughput </h3>
+                        <p id="throughput">Loading...</p>
+                    </div>
+
+                </div>
+                
             </div>
 
 

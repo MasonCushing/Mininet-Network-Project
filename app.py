@@ -4,8 +4,9 @@ from mininet.log import setLogLevel
 import re
 import snmp_monitor
 import traffic_controller 
-from network_performance import (measure_latency,measure_packet_loss, measure_throughput)
-
+from network_performance import ( measure_ping, measure_throughput)
+import threading 
+performance_lock = threading.Lock()
 
 
 app = Flask(__name__, template_folder='Gui', static_folder='Styling')
@@ -79,7 +80,22 @@ def traffic_start(level):
         return jsonify({'error': 'unknown level'}), 400
     traffic_controller.start_traffic(net, level)
     return jsonify({'status': 'started', 'level': level})
-
+@app.route('/api/performance')
+def get_performance():
+  if not performance_lock.acquire(blocking=False):
+    return jsonify({'latency': None, 'packet-loss': None, 'throughput': None, 'error': 'Performance measurement in progress'})
+  try:
+    h1 = net.get('h1')
+    h2 = net.get('h2')
+    latency, packet_loss = measure_ping(h1, h2)
+    throughput = measure_throughput(h1, h2)
+    return jsonify({
+         'latency': latency,
+         'packet-loss': packet_loss,
+         'throughput': throughput
+     })
+  finally:
+        performance_lock.release()
 
 if __name__ == '__main__':
     setLogLevel('info')

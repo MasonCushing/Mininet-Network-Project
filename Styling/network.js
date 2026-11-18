@@ -66,14 +66,19 @@ async function loadTopology() { // Creates and loads the topoloy by retreiving i
 
     setupEvents(); //event grabber running so when you click things nodes and edges id are saved i think
 
-    document.getElementById('network-status').textContent = 'Network loaded';
+    const networkStatus=document.getElementById('network-status');
+    if (networkStatus) {
+        networkStatus.textContent = 'network loaded successfully';
+    }
 }
 
 document.addEventListener('DOMContentLoaded', () => {
     loadTopology().catch((error) => {
         console.error(error);
-        document.getElementById('network-status').textContent =
-            'Failed to load topology: ' + error.message;
+        const networkStatus=document.getElementById('network-status');
+        if (networkStatus) {
+            networkStatus.textContent = 'Failed to load network topology: ' + error.message;
+        }
     });
 
 });
@@ -149,4 +154,24 @@ document.addEventListener('DOMContentLoaded', () => {
     document.getElementById('traffic-stop').addEventListener('click', () => {
         sendTraffic('/api/traffic/stop', 'Traffic stopped');
     });
+    loadPerformance();
+    setInterval(loadPerformance, 5000);
 });
+async function loadPerformance(){
+    try{
+        const response= await fetch('/api/performance');
+        if(!response.ok){
+            throw new Error(
+                'could not load performance matrics'
+            );
+        }
+        const data = await response.json();
+        document.getElementById('latency').textContent= data.latency+'ms';
+        document.getElementById('packet-loss').textContent=data.packet_loss+'%';
+        document.getElementById('throughput').textContent= data.throughput+'Mbps';
+        
+    }
+    catch (error){
+        console.error(error);
+    }
+}
