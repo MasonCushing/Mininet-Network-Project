@@ -111,6 +111,11 @@ def traffic_stop():
     traffic_controller.stop_traffic(net)
     return jsonify({'status': 'stopped'})
 
+@app.route('/api/traffic/random', methods=['POST'])
+def traffic_random():
+    traffic_controller.start_random_traffic(net)
+    return jsonify({'status': 'started', 'profile': 'random'})
+
 @app.route('/api/traffic/<profile>', methods=['POST'])
 def traffic_start(profile):
     if profile not in traffic_controller.TRAFFIC_PROFILES:

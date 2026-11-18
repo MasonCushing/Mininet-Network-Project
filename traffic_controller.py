@@ -1,5 +1,9 @@
+import random
 import threading 
+from Topology import ROUTER_SWITCHES, SWITCH_HOST_IDS
+
 traffic_lock = threading.Lock() 
+CONTINUOUS_DURATION = 2147483647
 
 TRAFFIC_PROFILES = {
     'voice': {
@@ -46,16 +50,12 @@ TRAFFIC_PROFILES = {
     }
 }
 
+ROUTER_GROUPS = [
+    [list(SWITCH_HOST_IDS[switch]) for switch in switches]
+    for switches in ROUTER_SWITCHES.values()
+]
 SWITCH_GROUPS = [
-    [1, 2, 3, 4, 5, 6],        # s4 host
-    [7, 8, 9, 10, 11, 12],     # s5 host
-    [13, 14, 15, 18, 19, 20],  # s6 host
-    [16, 17, 21, 22, 23, 24],  # s7 host
-    [25, 26, 27, 28, 29, 30],  # s8 host
-    [31, 32, 33, 34, 35, 36],  # s9 host
-    [37, 38, 39, 40, 41, 42],  # s10 host
-    [43, 44, 45, 46, 47, 48],  # s11 host
-    [49, 50, 51, 52, 53, 54],  # s12 host
+    group for router_groups in ROUTER_GROUPS for group in router_groups
 ]
 
 # Creates client server pair on the same switch 
@@ -71,12 +71,42 @@ PROFILE_PAIRS = dict(zip(TRAFFIC_PROFILES, build_pairs(len(TRAFFIC_PROFILES))))
 
 def stop_traffic(net):
     with traffic_lock:
-        for host in net.hosts:
-            host.cmd('pkill -x iperf')
+        _stop_all_traffic(net)
+
+
+def _stop_all_traffic(net):
+    for host in net.hosts:
+        host.cmd('pkill -x iperf')
+
+
+def _start_flow(net, profile, client_id, server_id, port, duration=None):
+    settings = TRAFFIC_PROFILES[profile]
+    client = net.get(f'h{client_id}')
+    server = net.get(f'h{server_id}')
+
+    udp_args = ' -u' if settings['transport'] == 'udp' else ''
+    server.cmd(
+        f"iperf -s{udp_args} -p {port} > /dev/null 2>&1 & sleep 0.1"
+    )
+
+    if 'transfer_size' in settings and duration is None:
+        client_args = f"-n {settings['transfer_size']}"
+    elif settings['transport'] == 'tcp':
+        client_args = f"-t {duration or settings['duration']}"
+    else:
+        client_args = (
+            f"-u -b {settings['bitrate']} "
+            f"-l {settings['packet_length']} "
+            f"-t {duration or settings['duration']}"
+        )
+
+    client.cmd(
+        f"iperf -c {server.IP()} -p {port} {client_args} "
+        f"-S {settings['tos']} > /dev/null 2>&1 &"
+    )
 
 
 def start_traffic(net, profile):
-    settings = TRAFFIC_PROFILES[profile]
     client_id, server_id = PROFILE_PAIRS[profile]
     client = net.get(f'h{client_id}')
     server = net.get(f'h{server_id}')
@@ -85,23 +115,39 @@ def start_traffic(net, profile):
     with traffic_lock:
         client.cmd('pkill -x iperf')
         server.cmd('pkill -x iperf')
+        _start_flow(net, profile, client_id, server_id, port)
 
-        udp_args = ' -u' if settings['transport'] == 'udp' else ''
-        server.cmd(
-            f"iperf -s{udp_args} -p {port} > /dev/null 2>&1 &"
-        )
 
-        if 'transfer_size' in settings:
-            client_args = f"-n {settings['transfer_size']}"
-        elif settings['transport'] == 'tcp':
-            client_args = f"-t {settings['duration']}"
-        else:
-            client_args = (
-                f"-u -b {settings['bitrate']} "
-                f"-l {settings['packet_length']} -t {settings['duration']}"
+def start_random_traffic(net):
+    profiles = list(TRAFFIC_PROFILES)
+    flows = []
+
+    for router_index, source_groups in enumerate(ROUTER_GROUPS):
+        destination_groups = ROUTER_GROUPS[
+            (router_index + 1) % len(ROUTER_GROUPS)
+        ]
+        for source_group, destination_group in zip(
+            random.sample(source_groups, len(source_groups)),
+            random.sample(destination_groups, len(destination_groups))
+        ):
+            flows.append((
+                random.choice(source_group),
+                random.choice(destination_group)
+            ))
+
+    assigned_profiles = random.sample(profiles, len(profiles))
+    assigned_profiles.extend(
+        random.choice(profiles)
+        for _ in range(len(flows) - len(assigned_profiles))
+    )
+    random.shuffle(assigned_profiles)
+
+    with traffic_lock:
+        _stop_all_traffic(net)
+        for flow_index, (profile, (client_id, server_id)) in enumerate(
+            zip(assigned_profiles, flows)
+        ):
+            _start_flow(
+                net, profile, client_id, server_id, 5201 + flow_index,
+                duration=CONTINUOUS_DURATION
             )
-
-        client.cmd(
-            f"iperf -c {server.IP()} -p {port} {client_args} "
-            f"-S {settings['tos']} > /dev/null 2>&1 &"
-        )
