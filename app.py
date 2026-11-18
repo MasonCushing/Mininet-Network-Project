@@ -1,4 +1,5 @@
-from flask import Flask, jsonify, render_template
+from flask import Flask, jsonify, render_template, send_from_directory
+import os
 from Topology import myNetwork
 from mininet.log import setLogLevel
 import re
@@ -55,6 +56,22 @@ def get_topology(): # converts mininet topo into the cytoscape form
 @app.route('/')
 def index():
     return render_template('main.html')
+
+@app.route('/login')
+def login_page():
+    return render_template('Login-Design/login.html')
+
+@app.route('/qos')
+def qos_page():
+    return render_template('Qos-Config/Qos.html')
+
+@app.route('/traffic')
+def traffic_page():
+    return render_template('Traffic-Controller/TrafficController.html')
+
+@app.route('/gui-assets/<path:filename>')
+def gui_asset(filename):
+    return send_from_directory(os.path.join(app.root_path, app.template_folder), filename)
 
 
 @app.route('/api/topology')

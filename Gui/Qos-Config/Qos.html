@@ -1,0 +1,56 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>QoS Configurations | Network Monitor</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <link rel="stylesheet" href="{{ url_for('gui_asset', filename='Qos-Config/Qos.css') }}">
+</head>
+
+<body>
+    <header class="app-header">
+        <img src="{{ url_for('static', filename='icons/hexagonal-tech-logo.svg') }}" class="app-logo" alt="Network Monitor logo">
+        <h1 class="logo-text">Network Monitor Intelligent Traffic Engineering and QoS</h1>
+    </header>
+    <nav class="sidebar" aria-label="Main navigation">
+        <a href="{{ url_for('index') }}">Network Monitor</a>
+        <a href="{{ url_for('traffic_page') }}">Traffic Manager</a>
+        <a href="{{ url_for('qos_page') }}" aria-current="page">QoS Configurations</a>
+        <a href="{{ url_for('login_page') }}">Login</a>
+    </nav>
+    <main class="page-content">
+        <div class="main-block">
+        <h1 class="header">QOS Configurations</h1>
+        <p class="sub-text">Set traffic class priority, DSCP marking, and bandwidth guarantees</p>
+
+        <div class = "Grid">
+            <div class = "traffic-classes">
+                <h1 class = "header">Traffic Classes</h1>
+
+            </div>
+
+            <div class = "bandwidth-allocation">
+                <h1 class = "header">Bandwidth Allocation</h1>
+            </div>
+        </div>
+
+        <div class = "Grid">
+            <div class = "apply-policy">
+                <h1 class = "header">Apply Policy To</h1>
+            </div>
+
+            <div class = "queue-schedular">
+                <h1 class = "header">Queue Scheduling</h1>
+            </div>
+        </div>
+
+        <div class = "buttons">
+            <button>Reset to Default</button>
+            <button>Save Draft</button>
+        </div>
+        </div>
+    </main>
+</body>
+</html>

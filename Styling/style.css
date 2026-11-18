@@ -5,28 +5,63 @@
 body{ 
     background-color: #012a54;
     color:white;
-    margin-top: 100px;
-    margin-left: 170px;
+    margin: 100px 24px 24px 190px;
 }
 
-.header{
+.app-header{
     position: fixed;
     top: 0;
     left: 0;
     width: 100%;
+    min-height: 80px;
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    padding: 10px 24px;
     background-color: #023970;
     z-index: 10;
 }
 
+.app-logo{
+    width: 52px;
+    height: 52px;
+}
+
+.logo-text{
+    margin: 0;
+    font-size: 20px;
+}
+
 .sidebar{
-    position: fixed; 
-    top:100px;
+    position: fixed;
+    top: 80px;
     left: 0;
     width: 150px;
-    height: 100%;
+    height: calc(100vh - 80px);
+    padding: 16px 10px;
     z-index: 10;
     background-color: #023970;
     border-radius: 6px;
+}
+
+.sidebar a{
+    display: block;
+    margin-bottom: 8px;
+    padding: 10px;
+    border-radius: 5px;
+    color: #e8f1fc;
+    text-decoration: none;
+}
+
+.sidebar a:hover,
+.sidebar a:focus,
+.sidebar a[aria-current="page"]{
+    background-color: #064780;
+    outline-color: #72b8ff;
+}
+
+.page-content{
+    min-width: 0;
 }
 
 .network-box {
@@ -112,9 +147,6 @@ body{
 }
 
 
-.logo-text{
-    display: inline-block;
-}
 .network-performance{
     width:900px;
     margin-top: 20px;
@@ -145,4 +177,40 @@ body{
     margin: 0;
     font-size: 24px;
     font-weight: bold;
+}
+
+@media (max-width: 700px){
+    body{
+        margin: 150px 16px 24px;
+    }
+
+    .app-header{
+        min-height: 68px;
+        padding: 8px 14px;
+    }
+
+    .app-logo{
+        width: 44px;
+        height: 44px;
+    }
+
+    .logo-text{
+        font-size: 16px;
+    }
+
+    .sidebar{
+        top: 68px;
+        width: 100%;
+        height: auto;
+        display: flex;
+        flex-wrap: wrap;
+        gap: 4px;
+        padding: 6px 10px;
+        border-radius: 0;
+    }
+
+    .sidebar a{
+        margin: 0;
+        padding: 8px;
+    }
 }

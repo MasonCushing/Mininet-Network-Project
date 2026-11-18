@@ -1,0 +1,145 @@
+body{
+    font-family: "Segoe UI", Roboto, Arial, sans-serif;
+}
+
+.Header{
+    color: white;
+    font-size: 20px;
+    font-weight: 600;
+    margin: 0;
+}
+
+.Text{
+    margin-top: 5px;
+    margin-bottom: 20px;
+    color: #72b8ff;
+    font-size: 12px;
+}
+
+.Grid{
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 16px;
+}
+
+.Routing-Mode{
+    margin-top: 16px;
+    margin-bottom: 16px;
+    min-height: 100px;
+}
+
+.Active-Flows{
+    min-height: 220px;
+}
+
+.Traffic-Generator,
+.Link-Utilization{
+    min-height: 200px;
+}
+
+.dropdown-menu{
+    position: relative;
+    width: min(100%, 280px);
+    margin-bottom: 12px;
+}
+
+.dropdown-menu input{
+    width: 100%;
+    box-sizing: border-box;
+    padding: 8px 10px;
+    border: 1px solid #0f4a86;
+    border-radius: 4px;
+    background-color: #021b3a;
+    color: #e8f1fc;
+    font: inherit;
+}
+
+.dropdown-menu input:focus{
+    outline: 2px solid #2f8dff;
+    outline-offset: 1px;
+}
+
+.dropdown-list{
+    display: none;
+    position: absolute;
+    z-index: 1;
+    top: calc(100% + 3px);
+    left: 0;
+    right: 0;
+    max-height: 180px;
+    overflow-y: auto;
+    border: 1px solid #0f4a86;
+    border-radius: 4px;
+    background-color: #04274d;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3);
+}
+
+.dropdown-list button{
+    display: block;
+    width: 100%;
+    padding: 8px 10px;
+    border: 0;
+    background: transparent;
+    color: #e8f1fc;
+    text-align: left;
+    font: inherit;
+    cursor: pointer;
+}
+
+.Traffic-Generator .dropdown-list button{
+    padding: 8px 10px;
+    border: 0;
+    border-radius: 0;
+    background: transparent;
+    color: #e8f1fc;
+    text-align: left;
+    font: inherit;
+}
+
+.Traffic-Generator .dropdown-list button:hover,
+.Traffic-Generator .dropdown-list button:focus{
+    outline: none;
+    background-color: #0f4a86;
+}
+
+.dropdown-list button:hover,
+.dropdown-list button:focus{
+    outline: none;
+    background-color: #0f4a86;
+}
+
+.dropdown-empty{
+    padding: 8px 10px;
+    color: #72b8ff;
+}
+
+.Traffic-Generator,
+.Link-Utilization,
+.Routing-Mode,
+.Active-Flows{
+    background-color: #04274d;
+    border: 1px solid #0f4a86;
+    border-radius: 6px;
+    box-sizing: border-box;
+    padding: 14px 16px;
+    color: #e8f1fc;
+    font-size: 13px;
+}
+
+
+.Traffic-Generator button{
+    padding: 7px 16px;
+    background-color: #2f8dff;
+    border: 1px solid #2f8dff;
+    border-radius: 4px;
+    color: white;
+    font-size: 12px;
+    font-weight: 600;
+    cursor: pointer;
+}
+
+@media (max-width: 700px){
+    body > div > .Grid{
+        grid-template-columns: minmax(0, 1fr);
+    }
+}

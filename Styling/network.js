@@ -167,7 +167,7 @@ async function loadPerformance(){
         }
         const data = await response.json();
         document.getElementById('latency').textContent= data.latency+'ms';
-        document.getElementById('packet-loss').textContent=data.packet_loss+'%';
+        document.getElementById('packet-loss').textContent=data['packet-loss']+'%';
         document.getElementById('throughput').textContent= data.throughput+'Mbps';
         
     }
