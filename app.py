@@ -1,4 +1,4 @@
-from flask import Flask, jsonify, render_template, send_from_directory
+from flask import Flask, jsonify, render_template, send_from_directory, redirect, request, session, url_for
 import os
 from Topology import myNetwork
 from mininet.log import setLogLevel
@@ -11,8 +11,14 @@ performance_lock = threading.Lock()
 
 
 app = Flask(__name__, template_folder='Gui', static_folder='Styling')
+app.secret_key = os.environ.get('NETWORK_MONITOR_SECRET_KEY', os.urandom(32))
 
 net = None
+
+@app.before_request
+def require_login_for_api():
+    if request.path.startswith('/api/') and 'authenticated' not in session:
+        return jsonify({'error': 'Authentication required'}), 401
 
 # Displays the Topo and Gets it 
 
@@ -55,18 +61,33 @@ def get_topology(): # converts mininet topo into the cytoscape form
 #Running
 @app.route('/')
 def index():
+    if 'authenticated' not in session:
+        return render_template('Login-Design/login.html')
     return render_template('main.html')
 
-@app.route('/login')
+@app.route('/login', methods=['GET', 'POST'])
 def login_page():
+    if request.method == 'POST':
+        credentials = request.get_json(silent=True) or request.form
+        if credentials.get('username') == 'admin' and credentials.get('password') == '1234':
+            session['authenticated'] = True
+            return jsonify({'authenticated': True, 'redirect': url_for('index')})
+        return jsonify({'authenticated': False, 'message': 'Invalid username or password.'}), 401
+
+    if 'authenticated' in session:
+        return redirect(url_for('index'))
     return render_template('Login-Design/login.html')
 
 @app.route('/qos')
 def qos_page():
+    if 'authenticated' not in session:
+        return redirect(url_for('index'))
     return render_template('Qos-Config/Qos.html')
 
 @app.route('/traffic')
 def traffic_page():
+    if 'authenticated' not in session:
+        return redirect(url_for('index'))
     return render_template('Traffic-Controller/TrafficController.html')
 
 @app.route('/gui-assets/<path:filename>')

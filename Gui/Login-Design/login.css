@@ -1,5 +1,15 @@
+.login-page body,
+body:has(.login-block){
+    margin: 80px 24px 24px;
+}
+
+.login-page .page-content,
+.page-content:has(.login-block){
+    width: 100%;
+}
+
 .center{
-    min-height: calc(100vh - 120px);
+    min-height: calc(100vh - 80px);
     display: flex;
     align-items: center;
     justify-content: center;

@@ -1,21 +1,27 @@
-function login() {
-
+async function login() {
     const username = document.getElementById("username").value;
     const password = document.getElementById("password").value;
-
     const message = document.getElementById("message");
 
-    const correctUsername = "admin";
-    const correctPassword = "1234";
+    try {
+        const response = await fetch("/login", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ username, password })
+        });
+        const result = await response.json();
 
-    if(username === correctUsername && password === correctPassword){
-        message.style.color = "green";
-        message.textContent = "Password Correct.";
-        window.location.href = "/";
-    }else {
+        if (response.ok && result.authenticated) {
+            message.style.color = "green";
+            message.textContent = "Password Correct.";
+            window.location.href = result.redirect;
+            return;
+        }
 
         message.style.color = "red";
-        message.textContent = "Invalid username or password.";
-
+        message.textContent = result.message || "Invalid username or password.";
+    } catch (error) {
+        message.style.color = "red";
+        message.textContent = "Unable to log in. Please try again.";
     }
 }
