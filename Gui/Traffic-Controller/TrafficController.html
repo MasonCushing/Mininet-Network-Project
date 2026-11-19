@@ -82,7 +82,30 @@
         </div>
 
         <div class = "Active-Flows">
+<<<<<<< Updated upstream
             <h1 class = "flow-header">Active Flows</h1>
+=======
+            <h1 class="flow-header">Active Flows</h1>
+            <p id="active-flows-status" role="status">Loading active flows...</p>
+            <div class="active-flows-table-wrap">
+                <table class="active-flows-table">
+                    <thead>
+                        <tr>
+                            <th>Source</th>
+                            <th>Destination</th>
+                            <th>Profile</th>
+                            <th>Routing Mode</th>
+                            <th>Forwarding Path</th>
+                            <th>Port</th>
+                            <th>Started</th>
+                        </tr>
+                    </thead>
+                    <tbody id="active-flows-list">
+                        <tr><td colspan="7">Loading...</td></tr>
+                    </tbody>
+                </table>
+            </div>
+>>>>>>> Stashed changes
         </div>
         <script src="{{ url_for('gui_asset', filename='Traffic-Controller/TrafficController.js') }}"></script>
         </div>

@@ -12,6 +12,55 @@ const options = [
     "H51",
 ];
 
+<<<<<<< Updated upstream
+=======
+let selectedRouteMode = 'shortest';
+
+function hostName(value) {
+    return value.trim().toLowerCase();
+}
+
+async function calculateRoute(applyRoute = false) {
+    const source = hostName(document.getElementById('source-host').value);
+    const target = hostName(document.getElementById('target-host').value);
+    const status = document.getElementById('route-status');
+    const results = document.getElementById('route-results');
+
+    if (!source || !target) {
+        status.textContent = 'Enter both a source and destination host.';
+        return null;
+    }
+
+    status.textContent = applyRoute ? 'Applying route...' : 'Calculating routes...';
+
+    try {
+        const url = applyRoute
+            ? '/api/route'
+            : '/api/route?source=' + encodeURIComponent(source) + '&target=' + encodeURIComponent(target) + '&mode=' + encodeURIComponent(selectedRouteMode);
+        const response = await fetch(url, {
+            method: applyRoute ? 'POST' : 'GET',
+            headers: applyRoute ? {'Content-Type': 'application/json'} : undefined,
+            body: applyRoute ? JSON.stringify({source, target, mode: selectedRouteMode}) : undefined
+        });
+        const data = await response.json();
+        if (!response.ok) throw new Error(data.error || 'Route calculation failed');
+
+        status.textContent = applyRoute
+            ? 'Route applied for ' + data.source + ' to ' + data.target
+            : 'Routes calculated for ' + data.source + ' to ' + data.target;
+        results.innerHTML =
+            '<div class="route-result"><strong>Selected forwarding path (' +
+            (selectedRouteMode === 'shortest' ? 'Shortest Path' : 'Least Traffic Cost') +
+            ')</strong><code>' + data.selected_path.join(' → ') + '</code></div>';
+        return data;
+    } catch (error) {
+        status.textContent = 'Route failed: ' + error.message;
+        results.textContent = '';
+        return null;
+    }
+}
+
+>>>>>>> Stashed changes
 document.querySelectorAll(".dropdown-menu").forEach(menu => {
     const searchInput = menu.querySelector("input");
     const dropdown = menu.querySelector(".dropdown-list");
@@ -59,4 +108,111 @@ document.addEventListener("click", function(event) {
             dropdown.style.display = "none";
         });
     }
+<<<<<<< Updated upstream
 });
+=======
+});
+
+document.querySelectorAll('.route-mode').forEach(button => {
+    button.addEventListener('click', () => {
+        selectedRouteMode = button.dataset.mode;
+        document.querySelectorAll('.route-mode').forEach(item => item.classList.remove('active'));
+        button.classList.add('active');
+        calculateRoute(false);
+    });
+});
+
+document.getElementById('apply-route').addEventListener('click', () => calculateRoute(true));
+document.getElementById('source-host').addEventListener('change', () => calculateRoute(false));
+document.getElementById('target-host').addEventListener('change', () => calculateRoute(false));
+
+async function loadActiveFlows() {
+    const status = document.getElementById('active-flows-status');
+    const tableBody = document.getElementById('active-flows-list');
+
+    try {
+        const response = await fetch('/api/traffic/active');
+        const data = await response.json();
+        if (!response.ok) throw new Error(data.error || 'Could not load active flows');
+
+        tableBody.replaceChildren();
+        if (!data.flows.length) {
+            const row = tableBody.insertRow();
+            const cell = row.insertCell();
+            cell.colSpan = 7;
+            cell.textContent = 'No active flows.';
+        } else {
+            data.flows.forEach(flow => {
+                const row = tableBody.insertRow();
+                [
+                    flow.source,
+                    flow.target,
+                    flow.profile,
+                    flow.routing_mode,
+                    (flow.route_path || []).join(' → ') || 'Default network route',
+                    flow.port,
+                    new Date(flow.started_at * 1000).toLocaleTimeString()
+                ].forEach(value => {
+                    row.insertCell().textContent = value;
+                });
+            });
+        }
+        status.textContent = data.flows.length
+            ? data.flows.length + ' active flow(s)'
+            : 'No active flows';
+    } catch (error) {
+        status.textContent = 'Unable to load flows: ' + error.message;
+    }
+}
+
+document.getElementById('stop-all').addEventListener('click', async () => {
+    const status = document.getElementById('route-status');
+    status.textContent = 'Stopping traffic...';
+    try {
+        const response = await fetch('/api/traffic/stop', {method: 'POST'});
+        const data = await response.json();
+        if (!response.ok) throw new Error(data.error || 'Could not stop traffic');
+        status.textContent = 'All traffic stopped.';
+        await loadActiveFlows();
+    } catch (error) {
+        status.textContent = 'Stop failed: ' + error.message;
+    }
+});
+
+document.getElementById('start-flow').addEventListener('click', async () => {
+    const status = document.getElementById('route-status');
+    status.textContent = 'Starting traffic...';
+    try {
+        const source = hostName(document.getElementById('source-host').value);
+        const target = hostName(document.getElementById('target-host').value);
+        const profile = document.getElementById('traffic-profile').value;
+        const rate = document.getElementById('Rate').value;
+        const duration = document.getElementById('Duration').value;
+        const response = await fetch('/api/traffic/custom', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({
+                source,
+                target,
+                profile,
+                rate,
+                duration,
+                mode: selectedRouteMode
+            })
+        });
+        const data = await response.json();
+        if (!response.ok) throw new Error(data.error || 'Could not start traffic');
+        status.textContent = 'Traffic started on the ' + data.routing_mode +
+            ' route: ' + data.source + ' to ' + data.target;
+        document.getElementById('route-results').innerHTML =
+            '<div class="route-result"><strong>Active forwarding path</strong>' +
+            '<code>' + data.route_path.join(' → ') + '</code></div>';
+        await loadActiveFlows();
+    } catch (error) {
+        status.textContent = 'Start failed: ' + error.message;
+    }
+});
+
+loadActiveFlows();
+window.setInterval(loadActiveFlows, 2000);
+>>>>>>> Stashed changes

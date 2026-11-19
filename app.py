@@ -117,6 +117,74 @@ def traffic_random():
     traffic_controller.start_random_traffic(net)
     return jsonify({'status': 'started', 'profile': 'random'})
 
+<<<<<<< Updated upstream
+=======
+@app.route('/api/traffic/custom', methods=['POST'])
+def traffic_custom():
+    data = request.get_json(silent=True) or {}
+    source = data.get('source')
+    target = data.get('target')
+    profile = data.get('profile')
+    rate = data.get('rate') or None
+    duration = data.get('duration') or None
+    mode = data.get('mode', 'shortest')
+
+    if not isinstance(source, str) or not isinstance(target, str):
+        return jsonify({'error': 'Source and destination must be host names'}), 400
+    if source not in net.nameToNode or target not in net.nameToNode:
+        return jsonify({'error': 'Unknown source or destination host'}), 400
+    if source not in {host.name for host in net.hosts} or target not in {host.name for host in net.hosts}:
+        return jsonify({'error': 'Source and destination must be hosts'}), 400
+    if source == target:
+        return jsonify({'error': 'Source and destination must be different hosts'}), 400
+    if profile not in traffic_controller.TRAFFIC_PROFILES:
+        return jsonify({'error': 'Unknown traffic profile'}), 400
+    if mode not in ('shortest', 'least-cost'):
+        return jsonify({'error': 'Unknown routing mode'}), 400
+
+    try:
+        rate = float(rate) if rate is not None else None
+        duration = int(duration) if duration is not None else None
+    except (TypeError, ValueError):
+        return jsonify({'error': 'Rate and duration must be numeric'}), 400
+    if rate is not None and not 0 < rate <= 1000:
+        return jsonify({'error': 'Rate must be greater than 0 and no more than 1000 Mbps'}), 400
+    if duration is not None and not 1 <= duration <= 3600:
+        return jsonify({'error': 'Duration must be between 1 and 3600 seconds'}), 400
+
+    try:
+        if mode == 'shortest':
+            selected_path = shortest_path(net, source, target)
+        else:
+            selected_path = least_cost_path(net, source, target)
+        if not selected_path:
+            return jsonify({'error': 'No route found'}), 404
+
+        installed_routes = apply_route(net, source, target, selected_path)
+        traffic_controller.start_custom_flow(
+            net,
+            source,
+            target,
+            profile,
+            rate=rate,
+            duration=duration,
+            route_path=selected_path,
+            routing_mode=mode
+        )
+    except Exception as e:
+        return jsonify({'error': 'Failed to start traffic', 'details': repr(e)}), 500
+
+    return jsonify({
+        'status': 'started',
+        'source': source,
+        'target': target,
+        'profile': profile,
+        'routing_mode': mode,
+        'route_path': selected_path,
+        'installed_routes': installed_routes
+    })
+
+>>>>>>> Stashed changes
 @app.route('/api/traffic/<profile>', methods=['POST'])
 def traffic_start(profile):
     if profile not in traffic_controller.TRAFFIC_PROFILES:

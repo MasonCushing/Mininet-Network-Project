@@ -1,6 +1,7 @@
 import random
 from Topology import ROUTER_SWITCHES, SWITCH_HOST_IDS
 from mininet_command_lock import mininet_command_lock
+from routing import shortest_path
 
 traffic_lock = mininet_command_lock
 CONTINUOUS_DURATION = 2147483647
@@ -77,6 +78,39 @@ def stop_traffic(net):
 def _stop_all_traffic(net):
     for host in net.hosts:
         host.cmd('pkill -x iperf')
+<<<<<<< Updated upstream
+=======
+    _active_flows.clear()
+
+
+def _record_flow(client, server, profile, port, route_path=None, routing_mode=None):
+    _active_flows[(client.name, port)] = {
+        'source': client.name,
+        'target': server.name,
+        'profile': profile,
+        'port': port,
+        'started_at': time.time(),
+        'routing_mode': routing_mode or 'default',
+        'route_path': route_path or []
+    }
+
+
+def get_active_flows(net):
+    with traffic_lock:
+        if not _active_flows:
+            return []
+
+        active = []
+        for key, flow in list(_active_flows.items()):
+            target_ip = net.get(flow['target']).IP()
+            signature = f'iperf -c {target_ip} -p {flow["port"]}'
+            process_list = net.get(flow['source']).cmd('ps -C iperf -o args=')
+            if any(signature in line for line in process_list.splitlines()):
+                active.append(dict(flow))
+            else:
+                _active_flows.pop(key, None)
+        return active
+>>>>>>> Stashed changes
 
 
 def _start_flow(net, profile, client_id, server_id, port, duration=None):
@@ -104,6 +138,16 @@ def _start_flow(net, profile, client_id, server_id, port, duration=None):
         f"iperf -c {server.IP()} -p {port} {client_args} "
         f"-S {settings['tos']} > /dev/null 2>&1 &"
     )
+<<<<<<< Updated upstream
+=======
+    _record_flow(
+        client,
+        server,
+        profile,
+        port,
+        route_path=shortest_path(net, client.name, server.name)
+    )
+>>>>>>> Stashed changes
 
 
 def start_traffic(net, profile):
@@ -118,6 +162,51 @@ def start_traffic(net, profile):
         _start_flow(net, profile, client_id, server_id, port)
 
 
+<<<<<<< Updated upstream
+=======
+def start_custom_flow(
+    net, source_name, target_name, profile, rate=None, duration=None,
+    route_path=None, routing_mode=None
+):
+    global _next_custom_port
+
+    if profile not in TRAFFIC_PROFILES:
+        raise ValueError('Unknown traffic profile')
+
+    source = net.get(source_name)
+    target = net.get(target_name)
+    settings = TRAFFIC_PROFILES[profile]
+
+    with traffic_lock:
+        udp_args = ' -u' if settings['transport'] == 'udp' else ''
+        port = _next_custom_port
+        _next_custom_port += 1
+        if _next_custom_port > 65000:
+            _next_custom_port = 5300
+        target.cmd(f"iperf -s{udp_args} -p {port} > /dev/null 2>&1 & sleep 0.1")
+
+        if settings['transport'] == 'udp':
+            bitrate = f"{rate}M" if rate else settings['bitrate']
+            client_args = (
+                f"-u -b {bitrate} -l {settings['packet_length']} "
+                f"-t {duration or settings['duration']}"
+            )
+        else:
+            transfer_duration = duration or settings.get('duration', 60)
+            client_args = f"-t {transfer_duration}"
+
+        source.cmd(
+            f"iperf -c {target.IP()} -p {port} {client_args} "
+            f"-S {settings['tos']} > /dev/null 2>&1 &"
+        )
+        _record_flow(
+            source, target, profile, port,
+            route_path=route_path,
+            routing_mode=routing_mode
+        )
+
+
+>>>>>>> Stashed changes
 def start_random_traffic(net):
     profiles = list(TRAFFIC_PROFILES)
     flows = []
