@@ -138,6 +138,72 @@ body{
     cursor: pointer;
 }
 
+#traffic-profile{
+    width: 100%;
+    padding: 8px 10px;
+    border: 1px solid #0f4a86;
+    border-radius: 4px;
+    background: #021b3a;
+    color: #e8f1fc;
+}
+
+.route-mode-controls{
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+}
+
+.Routing-Mode button{
+    padding: 7px 12px;
+    border: 1px solid #2f8dff;
+    border-radius: 4px;
+    background: #0f4a86;
+    color: white;
+    cursor: pointer;
+}
+
+.Routing-Mode button.active{
+    background: #2f8dff;
+}
+
+#route-status,
+#active-flows-status{
+    color: #72b8ff;
+}
+
+.route-result{
+    margin-top: 6px;
+    padding: 8px;
+    border: 1px solid #0f4a86;
+    border-radius: 4px;
+}
+
+.route-result code{
+    display: block;
+    margin-top: 5px;
+    overflow-wrap: anywhere;
+}
+
+.active-flows-table-wrap{
+    overflow-x: auto;
+}
+
+.active-flows-table{
+    width: 100%;
+    border-collapse: collapse;
+    text-align: left;
+}
+
+.active-flows-table th,
+.active-flows-table td{
+    padding: 9px;
+    border-bottom: 1px solid #0f4a86;
+}
+
+.active-flows-table th{
+    color: #72b8ff;
+}
+
 @media (max-width: 700px){
     body > div > .Grid{
         grid-template-columns: minmax(0, 1fr);

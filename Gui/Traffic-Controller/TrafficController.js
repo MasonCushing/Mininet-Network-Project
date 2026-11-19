@@ -9,11 +9,9 @@ const options = [
     "H36","H37","H38","H39","H40",
     "H41","H42","H43","H44","H45",
     "H46","H47","H48","H49","H50",
-    "H51",
+    "H51","H52","H53","H54",
 ];
 
-<<<<<<< Updated upstream
-=======
 let selectedRouteMode = 'shortest';
 
 function hostName(value) {
@@ -60,10 +58,10 @@ async function calculateRoute(applyRoute = false) {
     }
 }
 
->>>>>>> Stashed changes
 document.querySelectorAll(".dropdown-menu").forEach(menu => {
     const searchInput = menu.querySelector("input");
     const dropdown = menu.querySelector(".dropdown-list");
+    if (!searchInput || !dropdown) return;
 
     function displayOptions(filteredOptions) {
         dropdown.innerHTML = "";
@@ -108,9 +106,6 @@ document.addEventListener("click", function(event) {
             dropdown.style.display = "none";
         });
     }
-<<<<<<< Updated upstream
-});
-=======
 });
 
 document.querySelectorAll('.route-mode').forEach(button => {
@@ -215,4 +210,3 @@ document.getElementById('start-flow').addEventListener('click', async () => {
 
 loadActiveFlows();
 window.setInterval(loadActiveFlows, 2000);
->>>>>>> Stashed changes

@@ -1,5 +1,7 @@
 from collections import deque
 from snmp_monitor import get_node_stats
+from Topology import ROUTER_NEXT_HOPS
+from mininet_command_lock import mininet_command_lock
 import heapq
 
 def build_graph(net):
@@ -28,16 +30,15 @@ def shortest_path(net, source, target):
 
 def get_cost(net, node_name):
     try:
-        if not node.name.startswith("h"):
-            return 1
+        if not node_name.startswith("h"):
+            return 1.0
         node = net.get(node_name)
         stats = get_node_stats(node)
         bytes_total = (stats["bytes_in"] + stats["bytes_out"])
         errors_total = (stats["errors_in"] + stats["errors_out"])
-        cost = (1+(bytes_total/10000000)+(errors_total*5))
-        return cost
+        return 1.0 + (bytes_total / 10000000.0) + (errors_total * 5.0)
     except Exception:
-        return 1
+        return 1.0
 
 def least_cost_path(net, source, target):
     graph = build_graph(net)
@@ -63,3 +64,38 @@ def least_cost_path(net, source, target):
         current = previous_nodes[current]
     path.insert(0, source)
     return path
+
+
+def apply_route(net, source, target, path):
+    if not path:
+        raise ValueError('No path available')
+
+    installed = []
+    for destination, route_path in (
+        (target, path),
+        (source, list(reversed(path)))
+    ):
+        destination_ip = net.get(destination).IP()
+        for index, router_name in enumerate(route_path[:-1]):
+            if not router_name.startswith('r'):
+                continue
+            next_router = route_path[index + 1]
+            if not next_router.startswith('r'):
+                continue
+            next_hop = ROUTER_NEXT_HOPS[router_name].get(next_router)
+            if not next_hop:
+                raise ValueError(
+                    f'No next hop from {router_name} to {next_router}'
+                )
+            with mininet_command_lock:
+                result = net.get(router_name).cmd(
+                    f'ip route replace {destination_ip}/32 via {next_hop}'
+                )
+            installed.append({
+                'router': router_name,
+                'destination': destination,
+                'destination_ip': destination_ip,
+                'next_hop': next_hop,
+                'result': result.strip()
+            })
+    return installed

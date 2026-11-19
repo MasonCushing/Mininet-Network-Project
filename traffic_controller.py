@@ -1,10 +1,13 @@
 import random
+import time
 from Topology import ROUTER_SWITCHES, SWITCH_HOST_IDS
 from mininet_command_lock import mininet_command_lock
 from routing import shortest_path
 
 traffic_lock = mininet_command_lock
 CONTINUOUS_DURATION = 2147483647
+_active_flows = {}
+_next_custom_port = 5300
 
 TRAFFIC_PROFILES = {
     'voice': {
@@ -78,8 +81,6 @@ def stop_traffic(net):
 def _stop_all_traffic(net):
     for host in net.hosts:
         host.cmd('pkill -x iperf')
-<<<<<<< Updated upstream
-=======
     _active_flows.clear()
 
 
@@ -110,7 +111,6 @@ def get_active_flows(net):
             else:
                 _active_flows.pop(key, None)
         return active
->>>>>>> Stashed changes
 
 
 def _start_flow(net, profile, client_id, server_id, port, duration=None):
@@ -138,8 +138,6 @@ def _start_flow(net, profile, client_id, server_id, port, duration=None):
         f"iperf -c {server.IP()} -p {port} {client_args} "
         f"-S {settings['tos']} > /dev/null 2>&1 &"
     )
-<<<<<<< Updated upstream
-=======
     _record_flow(
         client,
         server,
@@ -147,7 +145,6 @@ def _start_flow(net, profile, client_id, server_id, port, duration=None):
         port,
         route_path=shortest_path(net, client.name, server.name)
     )
->>>>>>> Stashed changes
 
 
 def start_traffic(net, profile):
@@ -162,8 +159,6 @@ def start_traffic(net, profile):
         _start_flow(net, profile, client_id, server_id, port)
 
 
-<<<<<<< Updated upstream
-=======
 def start_custom_flow(
     net, source_name, target_name, profile, rate=None, duration=None,
     route_path=None, routing_mode=None
@@ -206,7 +201,6 @@ def start_custom_flow(
         )
 
 
->>>>>>> Stashed changes
 def start_random_traffic(net):
     profiles = list(TRAFFIC_PROFILES)
     flows = []
