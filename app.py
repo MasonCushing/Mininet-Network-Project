@@ -112,6 +112,10 @@ def traffic_stop():
     traffic_controller.stop_traffic(net)
     return jsonify({'status': 'stopped'})
 
+@app.route('/api/traffic/active')
+def traffic_active():
+    return jsonify({'flows': traffic_controller.get_active_flows(net)})
+
 @app.route('/api/traffic/random', methods=['POST'])
 def traffic_random():
     traffic_controller.start_random_traffic(net)
@@ -123,11 +127,29 @@ def traffic_custom():
     source = data.get('source')
     target = data.get('target')
     profile = data.get('profile')
+    rate = data.get('rate') or None
+    duration = data.get('duration') or None
 
+    if not isinstance(source, str) or not isinstance(target, str):
+        return jsonify({'error': 'Source and destination must be host names'}), 400
     if source not in net.nameToNode or target not in net.nameToNode:
         return jsonify({'error': 'Unknown source or destination host'}), 400
+    if source not in {host.name for host in net.hosts} or target not in {host.name for host in net.hosts}:
+        return jsonify({'error': 'Source and destination must be hosts'}), 400
+    if source == target:
+        return jsonify({'error': 'Source and destination must be different hosts'}), 400
     if profile not in traffic_controller.TRAFFIC_PROFILES:
         return jsonify({'error': 'Unknown traffic profile'}), 400
+
+    try:
+        rate = float(rate) if rate is not None else None
+        duration = int(duration) if duration is not None else None
+    except (TypeError, ValueError):
+        return jsonify({'error': 'Rate and duration must be numeric'}), 400
+    if rate is not None and not 0 < rate <= 1000:
+        return jsonify({'error': 'Rate must be greater than 0 and no more than 1000 Mbps'}), 400
+    if duration is not None and not 1 <= duration <= 3600:
+        return jsonify({'error': 'Duration must be between 1 and 3600 seconds'}), 400
 
     try:
         traffic_controller.start_custom_flow(
@@ -135,8 +157,8 @@ def traffic_custom():
             source,
             target,
             profile,
-            rate=data.get('rate') or None,
-            duration=data.get('duration') or None
+            rate=rate,
+            duration=duration
         )
     except Exception as e:
         return jsonify({'error': 'Failed to start traffic', 'details': repr(e)}), 500

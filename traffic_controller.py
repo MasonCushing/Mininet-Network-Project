@@ -1,9 +1,12 @@
 import random
+import time
 from Topology import ROUTER_SWITCHES, SWITCH_HOST_IDS
 from mininet_command_lock import mininet_command_lock
 
 traffic_lock = mininet_command_lock
 CONTINUOUS_DURATION = 2147483647
+_active_flows = {}
+_next_custom_port = 5300
 
 TRAFFIC_PROFILES = {
     'voice': {
@@ -77,6 +80,34 @@ def stop_traffic(net):
 def _stop_all_traffic(net):
     for host in net.hosts:
         host.cmd('pkill -x iperf')
+    _active_flows.clear()
+
+
+def _record_flow(client, server, profile, port):
+    _active_flows[(client.name, port)] = {
+        'source': client.name,
+        'target': server.name,
+        'profile': profile,
+        'port': port,
+        'started_at': time.time()
+    }
+
+
+def get_active_flows(net):
+    with traffic_lock:
+        if not _active_flows:
+            return []
+
+        active = []
+        for key, flow in list(_active_flows.items()):
+            target_ip = net.get(flow['target']).IP()
+            signature = f'iperf -c {target_ip} -p {flow["port"]}'
+            process_list = net.get(flow['source']).cmd('ps -C iperf -o args=')
+            if any(signature in line for line in process_list.splitlines()):
+                active.append(dict(flow))
+            else:
+                _active_flows.pop(key, None)
+        return active
 
 
 def _start_flow(net, profile, client_id, server_id, port, duration=None):
@@ -104,6 +135,7 @@ def _start_flow(net, profile, client_id, server_id, port, duration=None):
         f"iperf -c {server.IP()} -p {port} {client_args} "
         f"-S {settings['tos']} > /dev/null 2>&1 &"
     )
+    _record_flow(client, server, profile, port)
 
 
 def start_traffic(net, profile):
@@ -119,6 +151,8 @@ def start_traffic(net, profile):
 
 
 def start_custom_flow(net, source_name, target_name, profile, rate=None, duration=None):
+    global _next_custom_port
+
     if profile not in TRAFFIC_PROFILES:
         raise ValueError('Unknown traffic profile')
 
@@ -127,11 +161,11 @@ def start_custom_flow(net, source_name, target_name, profile, rate=None, duratio
     settings = TRAFFIC_PROFILES[profile]
 
     with traffic_lock:
-        source.cmd('pkill -x iperf')
-        target.cmd('pkill -x iperf')
-
         udp_args = ' -u' if settings['transport'] == 'udp' else ''
-        port = 5300
+        port = _next_custom_port
+        _next_custom_port += 1
+        if _next_custom_port > 65000:
+            _next_custom_port = 5300
         target.cmd(f"iperf -s{udp_args} -p {port} > /dev/null 2>&1 & sleep 0.1")
 
         if settings['transport'] == 'udp':
@@ -148,6 +182,7 @@ def start_custom_flow(net, source_name, target_name, profile, rate=None, duratio
             f"iperf -c {target.IP()} -p {port} {client_args} "
             f"-S {settings['tos']} > /dev/null 2>&1 &"
         )
+        _record_flow(source, target, profile, port)
 
 
 def start_random_traffic(net):

@@ -184,6 +184,30 @@ body{
     overflow-wrap: anywhere;
 }
 
+.active-flows-table-wrap {
+    overflow-x: auto;
+}
+
+.active-flows-table {
+    width: 100%;
+    border-collapse: collapse;
+    text-align: left;
+}
+
+.active-flows-table th,
+.active-flows-table td {
+    padding: 9px;
+    border-bottom: 1px solid #0f4a86;
+}
+
+.active-flows-table th {
+    color: #72b8ff;
+}
+
+#active-flows-status {
+    color: #72b8ff;
+}
+
 @media (max-width: 700px){
     body > div > .Grid{
         grid-template-columns: minmax(0, 1fr);

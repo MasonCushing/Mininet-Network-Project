@@ -62,6 +62,7 @@ async function calculateRoute(applyRoute = false) {
 document.querySelectorAll(".dropdown-menu").forEach(menu => {
     const searchInput = menu.querySelector("input");
     const dropdown = menu.querySelector(".dropdown-list");
+    if (!searchInput || !dropdown) return;
 
     function displayOptions(filteredOptions) {
         dropdown.innerHTML = "";
@@ -122,30 +123,82 @@ document.getElementById('apply-route').addEventListener('click', () => calculate
 document.getElementById('source-host').addEventListener('change', () => calculateRoute(false));
 document.getElementById('target-host').addEventListener('change', () => calculateRoute(false));
 
+async function loadActiveFlows() {
+    const status = document.getElementById('active-flows-status');
+    const tableBody = document.getElementById('active-flows-list');
+
+    try {
+        const response = await fetch('/api/traffic/active');
+        const data = await response.json();
+        if (!response.ok) throw new Error(data.error || 'Could not load active flows');
+
+        tableBody.replaceChildren();
+        if (!data.flows.length) {
+            const row = tableBody.insertRow();
+            const cell = row.insertCell();
+            cell.colSpan = 5;
+            cell.textContent = 'No active flows.';
+        } else {
+            data.flows.forEach(flow => {
+                const row = tableBody.insertRow();
+                [
+                    flow.source,
+                    flow.target,
+                    flow.profile,
+                    flow.port,
+                    new Date(flow.started_at * 1000).toLocaleTimeString()
+                ].forEach(value => {
+                    row.insertCell().textContent = value;
+                });
+            });
+        }
+        status.textContent = data.flows.length
+            ? data.flows.length + ' active flow(s)'
+            : 'No active flows';
+    } catch (error) {
+        status.textContent = 'Unable to load flows: ' + error.message;
+    }
+}
+
 document.getElementById('stop-all').addEventListener('click', async () => {
-    await fetch('/api/traffic/stop', {method: 'POST'});
-    document.getElementById('route-status').textContent = 'All traffic stopped.';
+    const status = document.getElementById('route-status');
+    status.textContent = 'Stopping traffic...';
+    try {
+        const response = await fetch('/api/traffic/stop', {method: 'POST'});
+        const data = await response.json();
+        if (!response.ok) throw new Error(data.error || 'Could not stop traffic');
+        status.textContent = 'All traffic stopped.';
+        await loadActiveFlows();
+    } catch (error) {
+        status.textContent = 'Stop failed: ' + error.message;
+    }
 });
 
 document.getElementById('start-flow').addEventListener('click', async () => {
+    const status = document.getElementById('route-status');
     const route = await calculateRoute(true);
     if (!route) return;
 
-    const source = hostName(document.getElementById('source-host').value);
-    const target = hostName(document.getElementById('target-host').value);
-    const profile = document.getElementById('traffic-profile').value;
-    const rate = document.getElementById('Rate').value;
-    const duration = document.getElementById('Duration').value;
-
-    const response = await fetch('/api/traffic/custom', {
-        method: 'POST',
-        headers: {'Content-Type': 'application/json'},
-        body: JSON.stringify({source, target, profile, rate, duration})
-    });
-    const data = await response.json();
-    document.getElementById('route-status').textContent = response.ok
-        ? 'Traffic started on the applied route.'
-        : ('Traffic failed: ' + (data.error || 'Unknown error'));
+    status.textContent = 'Starting traffic...';
+    try {
+        const source = hostName(document.getElementById('source-host').value);
+        const target = hostName(document.getElementById('target-host').value);
+        const profile = document.getElementById('traffic-profile').value;
+        const rate = document.getElementById('Rate').value;
+        const duration = document.getElementById('Duration').value;
+        const response = await fetch('/api/traffic/custom', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({source, target, profile, rate, duration})
+        });
+        const data = await response.json();
+        if (!response.ok) throw new Error(data.error || 'Could not start traffic');
+        status.textContent = 'Traffic started: ' + data.source + ' to ' + data.target;
+        await loadActiveFlows();
+    } catch (error) {
+        status.textContent = 'Start failed: ' + error.message;
+    }
 });
 
-calculateRoute(false);
+loadActiveFlows();
+window.setInterval(loadActiveFlows, 2000);
