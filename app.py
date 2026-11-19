@@ -126,18 +126,26 @@ def traffic_start(profile):
 
 @app.route('/api/route')
 def route():
-    source = 'h1'
-    target = 'h54'
+    source = request.args.get('source', 'h1')
+    target = request.args.get('target', 'h54')
+
+    if source not in net.nameToNode or target not in net.nameToNode:
+        return jsonify({'error': 'Unknown source or target node'}), 400
+
     try:
         shortest = shortest_path(net, source, target)
     except Exception as e:
         shortest = []
-        print(f"Error calculating shortest path:", repr(e))
+        print('Error calculating shortest path:', repr(e))
     try:
         least_traffic = least_cost_path(net, source, target)
     except Exception as e:
         least_traffic = []
-        print(f"Error calculating least traffic path:", repr(e))
+        print('Error calculating least traffic path:', repr(e))
+
+    if not shortest:
+        return jsonify({'error': 'No route found', 'source': source, 'target': target}), 404
+
     return jsonify({
         "algorithms": ["BFS", "Dijkstra"],
         "source": source,
