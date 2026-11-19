@@ -8,7 +8,8 @@ import traffic_controller
 from network_performance import ( measure_ping, measure_throughput)
 import threading 
 performance_lock = threading.Lock()
-
+from routing import (shortest_path, least_cost_path)
+current_routing_algorithm = 'shortest_path'  
 
 app = Flask(__name__, template_folder='Gui', static_folder='Styling')
 app.secret_key = os.environ.get('NETWORK_MONITOR_SECRET_KEY', os.urandom(32))
@@ -122,6 +123,31 @@ def traffic_start(profile):
         return jsonify({'error': 'unknown traffic profile'}), 400
     traffic_controller.start_traffic(net, profile)
     return jsonify({'status': 'started', 'profile': profile})
+
+@app.route('/api/route')
+def route():
+    source = 'h1'
+    target = 'h54'
+    try:
+        shortest = shortest_path(net, source, target)
+    except Exception as e:
+        shortest = []
+        print(f"Error calculating shortest path:", repr(e))
+    try:
+        least_traffic = least_cost_path(net, source, target)
+    except Exception as e:
+        least_traffic = []
+        print(f"Error calculating least traffic path:", repr(e))
+    return jsonify({
+        "algorithms": ["BFS", "Dijkstra"],
+        "source": source,
+        "target": target,
+        "shortest_path": shortest,
+        "shortest_hops": max(0, len(shortest) - 1),
+        "least_traffic_path": least_traffic,
+        "least_traffic_hops": max(0, len(least_traffic) - 1)
+    })
+
 @app.route('/api/performance')
 def get_performance():
   if not performance_lock.acquire(blocking=False):
