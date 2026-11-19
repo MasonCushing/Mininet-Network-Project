@@ -118,6 +118,38 @@ def start_traffic(net, profile):
         _start_flow(net, profile, client_id, server_id, port)
 
 
+def start_custom_flow(net, source_name, target_name, profile, rate=None, duration=None):
+    if profile not in TRAFFIC_PROFILES:
+        raise ValueError('Unknown traffic profile')
+
+    source = net.get(source_name)
+    target = net.get(target_name)
+    settings = TRAFFIC_PROFILES[profile]
+
+    with traffic_lock:
+        source.cmd('pkill -x iperf')
+        target.cmd('pkill -x iperf')
+
+        udp_args = ' -u' if settings['transport'] == 'udp' else ''
+        port = 5300
+        target.cmd(f"iperf -s{udp_args} -p {port} > /dev/null 2>&1 & sleep 0.1")
+
+        if settings['transport'] == 'udp':
+            bitrate = f"{rate}M" if rate else settings['bitrate']
+            client_args = (
+                f"-u -b {bitrate} -l {settings['packet_length']} "
+                f"-t {duration or settings['duration']}"
+            )
+        else:
+            transfer_duration = duration or settings.get('duration', 60)
+            client_args = f"-t {transfer_duration}"
+
+        source.cmd(
+            f"iperf -c {target.IP()} -p {port} {client_args} "
+            f"-S {settings['tos']} > /dev/null 2>&1 &"
+        )
+
+
 def start_random_traffic(net):
     profiles = list(TRAFFIC_PROFILES)
     flows = []

@@ -54,22 +54,6 @@ async function loadTopology() { // Creates and loads the topoloy by retreiving i
                     'curve-style': 'bezier',
                     'target-arrow-shape': 'none'
                 }
-            },
-            {
-                selector: 'node.route-highlight',
-                style: {
-                    'border-width': 4,
-                    'border-color': '#facc15',
-                    'border-opacity': 1
-                }
-            },
-            {
-                selector: 'edge.route-highlight',
-                style: {
-                    'width': 5,
-                    'line-color': '#facc15',
-                    'target-arrow-shape': 'none'
-                }
             }
         ],
 
@@ -170,73 +154,9 @@ document.addEventListener('DOMContentLoaded', () => {
     document.getElementById('traffic-stop').addEventListener('click', () => {
         sendTraffic('/api/traffic/stop', 'Traffic stopped');
     });
-    document.getElementById('find-route').addEventListener('click', findRoute);
-    document.getElementById('route-target').addEventListener('keydown', event => {
-        if (event.key === 'Enter') findRoute();
-    });
     loadPerformance();
     setInterval(loadPerformance, 5000);
 });
-async function findRoute() {
-    const source = document.getElementById('route-source').value.trim();
-    const target = document.getElementById('route-target').value.trim();
-    const status = document.getElementById('route-status');
-    const results = document.getElementById('route-results');
-
-    if (!source || !target) {
-        status.textContent = 'Enter both a source and target.';
-        return;
-    }
-
-    status.textContent = 'Calculating routes...';
-    results.textContent = '';
-
-    try {
-        const response = await fetch('/api/route?source=' + encodeURIComponent(source) + '&target=' + encodeURIComponent(target));
-        const data = await response.json();
-        if (!response.ok) throw new Error(data.error || 'Route calculation failed');
-
-        status.textContent = 'Routes calculated for ' + data.source + ' to ' + data.target;
-        results.innerHTML =
-            '<div class="route-result"><strong>BFS shortest path</strong><span> — ' + data.shortest_hops + ' hops</span>' +
-            '<code>' + data.shortest_path.join(' → ') + '</code></div>' +
-            '<div class="route-result"><strong>Dijkstra least-traffic path</strong><span> — ' + data.least_traffic_hops + ' hops</span>' +
-            '<code>' + (data.least_traffic_path.length ? data.least_traffic_path.join(' → ') : 'Unavailable') + '</code></div>';
-
-        highlightRoute(data.shortest_path, data.least_traffic_path);
-    } catch (error) {
-        status.textContent = 'Route failed: ' + error.message;
-        clearRouteHighlight();
-    }
-}
-
-function clearRouteHighlight() {
-    if (!cy) return;
-    cy.nodes().removeClass('route-highlight');
-    cy.edges().removeClass('route-highlight');
-}
-
-function highlightRoute(shortestPath, leastTrafficPath) {
-    if (!cy) return;
-    clearRouteHighlight();
-
-    const paths = [shortestPath, leastTrafficPath].filter(path => path.length);
-    paths.forEach(path => {
-        path.forEach(nodeId => cy.$id(nodeId).addClass('route-highlight'));
-
-        for (let i = 0; i < path.length - 1; i++) {
-            cy.edges().forEach(edge => {
-                const source = edge.source().id();
-                const target = edge.target().id();
-                if ((source === path[i] && target === path[i + 1]) ||
-                    (target === path[i] && source === path[i + 1])) {
-                    edge.addClass('route-highlight');
-                }
-            });
-        }
-    });
-}
-
 async function loadPerformance(){
     try{
         const response= await fetch('/api/performance');

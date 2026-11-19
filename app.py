@@ -8,7 +8,7 @@ import traffic_controller
 from network_performance import ( measure_ping, measure_throughput)
 import threading 
 performance_lock = threading.Lock()
-from routing import (shortest_path, least_cost_path)
+from routing import (shortest_path, least_cost_path, apply_route)
 current_routing_algorithm = 'shortest_path'  
 
 app = Flask(__name__, template_folder='Gui', static_folder='Styling')
@@ -117,6 +117,32 @@ def traffic_random():
     traffic_controller.start_random_traffic(net)
     return jsonify({'status': 'started', 'profile': 'random'})
 
+@app.route('/api/traffic/custom', methods=['POST'])
+def traffic_custom():
+    data = request.get_json(silent=True) or {}
+    source = data.get('source')
+    target = data.get('target')
+    profile = data.get('profile')
+
+    if source not in net.nameToNode or target not in net.nameToNode:
+        return jsonify({'error': 'Unknown source or destination host'}), 400
+    if profile not in traffic_controller.TRAFFIC_PROFILES:
+        return jsonify({'error': 'Unknown traffic profile'}), 400
+
+    try:
+        traffic_controller.start_custom_flow(
+            net,
+            source,
+            target,
+            profile,
+            rate=data.get('rate') or None,
+            duration=data.get('duration') or None
+        )
+    except Exception as e:
+        return jsonify({'error': 'Failed to start traffic', 'details': repr(e)}), 500
+
+    return jsonify({'status': 'started', 'source': source, 'target': target, 'profile': profile})
+
 @app.route('/api/traffic/<profile>', methods=['POST'])
 def traffic_start(profile):
     if profile not in traffic_controller.TRAFFIC_PROFILES:
@@ -124,10 +150,12 @@ def traffic_start(profile):
     traffic_controller.start_traffic(net, profile)
     return jsonify({'status': 'started', 'profile': profile})
 
-@app.route('/api/route')
+@app.route('/api/route', methods=['GET', 'POST'])
 def route():
-    source = request.args.get('source', 'h1')
-    target = request.args.get('target', 'h54')
+    request_data = request.get_json(silent=True) or request.args
+    source = request_data.get('source', 'h1')
+    target = request_data.get('target', 'h54')
+    mode = request_data.get('mode', 'shortest')
 
     if source not in net.nameToNode or target not in net.nameToNode:
         return jsonify({'error': 'Unknown source or target node'}), 400
@@ -146,6 +174,14 @@ def route():
     if not shortest:
         return jsonify({'error': 'No route found', 'source': source, 'target': target}), 404
 
+    selected_path = shortest if mode != 'least-cost' else (least_traffic or shortest)
+    installed = []
+    if request.method == 'POST':
+        try:
+            installed = apply_route(net, source, target, selected_path)
+        except Exception as e:
+            return jsonify({'error': 'Failed to install route', 'details': repr(e)}), 500
+
     return jsonify({
         "algorithms": ["BFS", "Dijkstra"],
         "source": source,
@@ -153,7 +189,11 @@ def route():
         "shortest_path": shortest,
         "shortest_hops": max(0, len(shortest) - 1),
         "least_traffic_path": least_traffic,
-        "least_traffic_hops": max(0, len(least_traffic) - 1)
+        "least_traffic_hops": max(0, len(least_traffic) - 1),
+        "selected_path": selected_path,
+        "mode": mode,
+        "installed_routes": installed,
+        "routing_applied": request.method == 'POST'
     })
 
 @app.route('/api/performance')

@@ -9,8 +9,55 @@ const options = [
     "H36","H37","H38","H39","H40",
     "H41","H42","H43","H44","H45",
     "H46","H47","H48","H49","H50",
-    "H51",
+    "H51","H52","H53","H54",
 ];
+
+let selectedRouteMode = 'shortest';
+
+function hostName(value) {
+    return value.trim().toLowerCase();
+}
+
+async function calculateRoute(applyRoute = false) {
+    const source = hostName(document.getElementById('source-host').value);
+    const target = hostName(document.getElementById('target-host').value);
+    const status = document.getElementById('route-status');
+    const results = document.getElementById('route-results');
+
+    if (!source || !target) {
+        status.textContent = 'Enter both a source and destination host.';
+        return null;
+    }
+
+    status.textContent = applyRoute ? 'Applying route...' : 'Calculating routes...';
+
+    try {
+        const url = applyRoute
+            ? '/api/route'
+            : '/api/route?source=' + encodeURIComponent(source) + '&target=' + encodeURIComponent(target) + '&mode=' + encodeURIComponent(selectedRouteMode);
+        const response = await fetch(url, {
+            method: applyRoute ? 'POST' : 'GET',
+            headers: applyRoute ? {'Content-Type': 'application/json'} : undefined,
+            body: applyRoute ? JSON.stringify({source, target, mode: selectedRouteMode}) : undefined
+        });
+        const data = await response.json();
+        if (!response.ok) throw new Error(data.error || 'Route calculation failed');
+
+        status.textContent = applyRoute
+            ? 'Route applied for ' + data.source + ' to ' + data.target
+            : 'Routes calculated for ' + data.source + ' to ' + data.target;
+        results.innerHTML =
+            '<div class="route-result"><strong>BFS shortest path</strong> — ' + data.shortest_hops + ' hops' +
+            '<code>' + data.shortest_path.join(' → ') + '</code></div>' +
+            '<div class="route-result"><strong>Dijkstra least-traffic path</strong> — ' + data.least_traffic_hops + ' hops' +
+            '<code>' + (data.least_traffic_path.length ? data.least_traffic_path.join(' → ') : 'Unavailable') + '</code></div>';
+        return data;
+    } catch (error) {
+        status.textContent = 'Route failed: ' + error.message;
+        results.textContent = '';
+        return null;
+    }
+}
 
 document.querySelectorAll(".dropdown-menu").forEach(menu => {
     const searchInput = menu.querySelector("input");
@@ -34,6 +81,7 @@ document.querySelectorAll(".dropdown-menu").forEach(menu => {
             item.addEventListener("click", () => {
                 searchInput.value = option;
                 dropdown.style.display = "none";
+                calculateRoute(false);
             });
             dropdown.appendChild(item);
         });
@@ -60,3 +108,44 @@ document.addEventListener("click", function(event) {
         });
     }
 });
+
+document.querySelectorAll('.route-mode').forEach(button => {
+    button.addEventListener('click', () => {
+        selectedRouteMode = button.dataset.mode;
+        document.querySelectorAll('.route-mode').forEach(item => item.classList.remove('active'));
+        button.classList.add('active');
+        calculateRoute(false);
+    });
+});
+
+document.getElementById('apply-route').addEventListener('click', () => calculateRoute(true));
+document.getElementById('source-host').addEventListener('change', () => calculateRoute(false));
+document.getElementById('target-host').addEventListener('change', () => calculateRoute(false));
+
+document.getElementById('stop-all').addEventListener('click', async () => {
+    await fetch('/api/traffic/stop', {method: 'POST'});
+    document.getElementById('route-status').textContent = 'All traffic stopped.';
+});
+
+document.getElementById('start-flow').addEventListener('click', async () => {
+    const route = await calculateRoute(true);
+    if (!route) return;
+
+    const source = hostName(document.getElementById('source-host').value);
+    const target = hostName(document.getElementById('target-host').value);
+    const profile = document.getElementById('traffic-profile').value;
+    const rate = document.getElementById('Rate').value;
+    const duration = document.getElementById('Duration').value;
+
+    const response = await fetch('/api/traffic/custom', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({source, target, profile, rate, duration})
+    });
+    const data = await response.json();
+    document.getElementById('route-status').textContent = response.ok
+        ? 'Traffic started on the applied route.'
+        : ('Traffic failed: ' + (data.error || 'Unknown error'));
+});
+
+calculateRoute(false);

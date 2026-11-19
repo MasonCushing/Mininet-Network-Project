@@ -1,5 +1,7 @@
 from collections import deque
 from snmp_monitor import get_node_stats
+from Topology import ROUTER_NEXT_HOPS
+from mininet_command_lock import mininet_command_lock
 import heapq
 
 def build_graph(net):
@@ -81,3 +83,41 @@ def least_cost_path(net, source, target):
             return []
         current = previous_nodes[current]
     return path
+
+
+def apply_route(net, source, target, path):
+    if not path:
+        raise ValueError('No path available')
+
+    installed = []
+
+    def install_destination(destination, route_path):
+        destination_ip = net.get(destination).IP()
+
+        for router_index, router_name in enumerate(route_path):
+            if not router_name.startswith('r'):
+                continue
+            if router_index + 1 >= len(route_path):
+                continue
+
+            next_node = route_path[router_index + 1]
+            if not next_node.startswith('r'):
+                continue
+
+            next_hop = ROUTER_NEXT_HOPS[router_name].get(next_node)
+            if not next_hop:
+                continue
+
+            command = f'ip route replace {destination_ip}/32 via {next_hop}'
+            with mininet_command_lock:
+                net.get(router_name).cmd(command)
+            installed.append({
+                'router': router_name,
+                'destination': destination,
+                'destination_ip': destination_ip,
+                'next_hop': next_hop
+            })
+
+    install_destination(target, path)
+    install_destination(source, list(reversed(path)))
+    return installed

@@ -29,10 +29,12 @@
                 <div class = "dropdown-menu">
                     <p class = "dropdown-text">Source host</p>
                     <input
+                        id="source-host"
                         type="text"
                         placeholder="Pick a Host"
                         autocomplete="off"
-                        aria-label="Search source host">
+                        aria-label="Search source host"
+                        value="H1">
 
                     <div class="dropdown-list"></div>
                 </div>
@@ -41,16 +43,26 @@
                 <div class = "dropdown-menu">
                     <p class = "dropdown-text">Destination Host</p>
                     <input
+                        id="target-host"
                         type="text"
                         placeholder="Pick a Host"
                         autocomplete="off"
-                        aria-label="Search destination host">
+                        aria-label="Search destination host"
+                        value="H54">
 
                     <div class="dropdown-list"></div>
                 </div>
 
                 <div class = "dropdown-menu">
                     <p class = "traffic-class">Traffic class</p>
+                    <select id="traffic-profile">
+                        <option value="voice">Voice (EF)</option>
+                        <option value="video">Video (AF41)</option>
+                        <option value="web">Web (Best Effort)</option>
+                        <option value="bulk">Bulk (CS1)</option>
+                        <option value="gaming">Gaming (CS5)</option>
+                        <option value="streaming">Streaming (AF31)</option>
+                    </select>
                 </div>
 
                 <div class = "rate">
@@ -64,8 +76,8 @@
                 </div>
                 
 
-                <button>Start Flow</button>
-                <button>Stop All</button>
+                <button id="start-flow" type="button">Start Flow</button>
+                <button id="stop-all" type="button">Stop All</button>
             </div>
 
             <div class = "Link-Utilization">
@@ -76,9 +88,13 @@
 
         <div class = "Routing-Mode">
             <h1>Routing Modes</h1>
-            <button>Shorteset Path</button>
-            <button>Least Congested</button>
-            <button>Load Balanced-Active</button>
+            <div class="route-mode-controls">
+                <button type="button" class="route-mode active" data-mode="shortest">Shortest Path</button>
+                <button type="button" class="route-mode" data-mode="least-cost">Least Traffic Cost</button>
+                <button type="button" id="apply-route">Apply Selected Route</button>
+            </div>
+            <p id="route-status">Choose hosts and a routing mode.</p>
+            <div id="route-results"></div>
         </div>
 
         <div class = "Active-Flows">
