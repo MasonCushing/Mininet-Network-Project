@@ -306,32 +306,204 @@ Subsystem      Algorithms
 
 ## Installation
 
-### Clone Repository
+### Prerequisites
+
+The project was developed and tested using:
+
+- VMware Workstation / VMware Player
+- Mininet Virtual Machine
+- Ubuntu Linux
+- Python 3
+- Flask
+- Ryu SDN Controller
+- Git
+
+---
+
+### Environment Setup
+
+#### 1. Install VMware
+
+Download and install one of the following:
+
+- VMware Workstation Pro
+- VMware Workstation Player
+
+---
+
+#### 2. Install a Linux Virtual Machine with Mininet
+
+Download the Mininet Virtual Machine from:
+
+https://mininet.org/download/
+
+Import the VM into VMware and verify that Mininet is installed.
+
+You can test Mininet using:
 
 ```bash
-git clone <repository-url>
+sudo mn --test pingall
+```
+
+Expected output:
+
+```text
+*** Ping**testing ping**eachability
+*** Results**0% dropped
+```
+
+---
+
+**## 3. Start the Virtual Machine
+
+**Launch the Mininet** through VMware and log into the Linux environment.
+
+**-
+
+#### 4. Install Required Softw**e
+
+Update system packages:
+
+```bash
+sudo apt update
+sudo apt upgrade**``
+
+Install Python and pip:
+
+```bash
+sudo apt install python3 python**pip -y**``
+
+Install Flask:
+
+```bash
+pip3 **stall flask
+```
+
+Install Ryu:
+
+``**bash
+pip3 install ryu
+```
+
+Install**Perf3:
+
+```bash
+sudo apt install **erf3 -y
+```
+
+Install Git:
+
+```bash sudo apt install git -y
+```
+
+Install Visual Studio Code (optional but recommended):
+
+```bash
+sudo snap **stall code --classic
+```
+
+---
+
+##** 5. Download the Project
+
+Clone tth repository:
+
+```bash
+git clone <**pository-url>
+```
+
+Navigate into the project folder:
+
+```bash
 cd Mininet-Network-Project
 ```
 
-### Start Ryu Controller
+---
+
+####**. Open the Project in an IDE
+
+Using Visual Studio Code:
+
+```bash
+code.
+```
+
+The project should now be open and ready for development.
+
+--**
+## Running the System
+
+### Step ** Start the Ryu Controller
+
+Open a terminal and run:
 
 ```bash
 ryu-manager ryu.app.simple_switch_13
 ```
 
-### Start Application
+Leave this terminal running.
+
+---
+
+**# Step 2: Start the Flask Application
+
+Open a second terminal:
 
 ```bash
+cd Mininet-Network-Project
+
 sudo mn -c
+
 sudo python3 app.py
 ```
 
-### Open Dashboard
+-**
+
+### Step 3: Open the Dashboard
+navigate to:
 
 ```text
-http://127.0.0.1:5000
+http://127.0**.1:5000
 ```
 
+---
+
+### Login Credentials
+
+```text
+Username: admin
+Pas**ord: 1234
+```
+
+---
+
+## Verificati**
+
+Verify the following APIs are operational:
+
+### Topology
+
+```text
+http://127.0.0.1:5000/api/topology
+**`
+
+### Performance Monitoring
+
+```text
+http://127.0.0.1:5000/api/performance
+```
+
+### Routing Algorithm**
+```text
+http://127.0.0.1:5000/app/route
+```
+
+### QoS Status
+
+```tex**http://127.0.0.1:5000/api/qos/status
+```
+
+A successful response from**hese endpoints indicates that the controller, Mininet topology, moni**ring system, routing algorithms, and QoS subsystem are functioning correctly.
 ---
 
 ## Available API Endpoints
