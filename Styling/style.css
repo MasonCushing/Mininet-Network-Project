@@ -1,216 +1,629 @@
+
+/* =========================================
+   GLOBAL STYLES
+========================================= */
+
 * {
     box-sizing: border-box;
 }
 
-body{ 
-    background-color: #012a54;
-    color:white;
-    margin: 100px 24px 24px 190px;
+:root {
+    --background: #012a54;
+    --header: #023970;
+    --panel: #023970;
+    --panel-light: #064780;
+    --border: #4c74be;
+    --accent: #72b8ff;
+    --text: #ffffff;
+    --muted: #c4d9f2;
+    --green: #10b981;
+    --red: #dc3545;
 }
 
-.app-header{
+body {
+    background-color: var(--background);
+    color: var(--text);
+    margin: 100px 24px 24px 190px;
+    font-family: Arial, sans-serif;
+}
+
+
+/* =========================================
+   HEADER
+========================================= */
+
+.app-header {
     position: fixed;
     top: 0;
     left: 0;
     width: 100%;
     min-height: 80px;
+
     display: flex;
     align-items: center;
     gap: 16px;
+
     padding: 10px 24px;
-    background-color: #023970;
+
+    background-color: var(--header);
     z-index: 10;
 }
 
-.app-logo{
+.app-logo {
     width: 52px;
     height: 52px;
 }
 
-.logo-text{
+.logo-text {
     margin: 0;
     font-size: 20px;
 }
 
-.sidebar{
+
+/* =========================================
+   NAVIGATION
+========================================= */
+
+.sidebar {
     position: fixed;
     top: 80px;
     left: 0;
+
     width: 150px;
     height: calc(100vh - 80px);
+
     padding: 16px 10px;
+
     z-index: 10;
-    background-color: #023970;
+
+    background-color: var(--header);
     border-radius: 6px;
 }
 
-.sidebar a{
+.sidebar a {
     display: block;
     margin-bottom: 8px;
     padding: 10px;
+
     border-radius: 5px;
+
     color: #e8f1fc;
     text-decoration: none;
+
+    transition: background-color 0.2s;
 }
 
 .sidebar a:hover,
 .sidebar a:focus,
-.sidebar a[aria-current="page"]{
+.sidebar a[aria-current="page"] {
     background-color: #064780;
-    outline-color: #72b8ff;
+    outline-color: var(--accent);
 }
 
-.page-content{
+
+/* =========================================
+   DASHBOARD LAYOUT
+========================================= */
+
+.network-page {
+    width: 100%;
+    max-width: 1800px;
+    margin: 0 auto;
+}
+
+.dashboard-overview {
+    width: 100%;
+    margin-bottom: 20px;
+}
+
+.dashboard-grid {
+    display: grid;
+
+    grid-template-columns:
+        minmax(220px, 0.85fr)
+        minmax(400px, 1.8fr)
+        minmax(260px, 1fr);
+
+    gap: 18px;
+    align-items: start;
+}
+
+.node-panel,
+.topology-panel,
+.monitoring-panel {
     min-width: 0;
+
+    display: flex;
+    flex-direction: column;
+    gap: 18px;
 }
 
-.network-box {
-    margin-top: 100px;
-    width: 900px;
+
+/* =========================================
+   GENERAL PANELS
+========================================= */
+
+.dashboard-panel,
+.network-box,
+.network-section,
+.details-section,
+.key,
+.network-performance {
+    width: 100%;
+    min-width: 0;
+
     padding: 16px;
-    border: 2px solid #4c74be;
-    background-color: #023970;
+
+    border: 2px solid var(--border);
     border-radius: 8px;
+
+    background-color: var(--panel);
+    color: var(--text);
+}
+
+.dashboard-panel h2,
+.network-section h2,
+.details-section h2,
+.network-performance h2 {
+    margin-top: 0;
     color: white;
 }
+
+.dashboard-panel p,
+.panel-description {
+    color: var(--muted);
+}
+
+
+/* =========================================
+   NETWORK TOPOLOGY
+========================================= */
 
 .network-section {
-    width: 1000px;
-    border: 2px solid #4c74be;
-    background-color: #023970;
-    color: white;
+    width: 100%;
 }
 
 #network {
     display: block;
     width: 100%;
-    height: 700px;
-    background-color: #012a54;
+    height: 650px;
+
+    background-color: var(--background);
     border-radius: 6px;
 }
 
+#network-status {
+    color: var(--muted);
+}
+
+
+/* =========================================
+   NODE DETAILS
+========================================= */
+
 .details-section {
-    width: 900px;
-    height: 400px;
-    margin-top: 20px;
-    padding: 16px;
-    border: 2px solid #4c74be;
-    border-radius: 8px;
-    background-color: #023970;
+    width: 100%;
+    min-height: 300px;
+    height: auto;
+}
+
+#stats-panel {
+    overflow-wrap: anywhere;
+    line-height: 1.7;
     color: white;
 }
 
 
+/* =========================================
+   NETWORK SUMMARY
+========================================= */
+
 .key {
     display: grid;
+
     grid-template-columns: 1fr 1fr;
     grid-template-rows: 50px 1fr 1fr;
+
     gap: 15px;
 
-    width: 900px;
-    height: 400px;
-    margin-top: 20px;
-    padding: 16px;
-
-    border: 2px solid #4c74be;
-    border-radius: 8px;
-    background-color: #023970;
-    color: white;
+    width: 100%;
+    height: auto;
+    min-height: 250px;
 }
 
 .Summary {
     grid-column: 1 / 3;
     margin: 0;
-    font-size: 24px;
+
+    font-size: 22px;
     font-weight: bold;
+}
+
+.summary-grid {
+    display: grid;
+
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+
+    gap: 12px;
+    margin-top: 15px;
 }
 
 .summary-box {
     display: flex;
     align-items: center;
     justify-content: center;
-    gap: 15px;
+    gap: 12px;
 
-    border: 1px solid #4c74be;
+    min-width: 0;
+
+    border: 1px solid var(--border);
     border-radius: 8px;
-    background-color: #064780;
-    padding: 15px;
+
+    background-color: var(--panel-light);
+    padding: 12px;
 }
 
 .summary-box img {
-    width: 40px;
-    height: 40px;
+    width: 35px;
+    height: 35px;
 }
 
 .summary-box p {
     margin: 0;
+    overflow-wrap: anywhere;
 }
 
+.summary-card {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 12px;
 
-.network-performance{
-    width:900px;
-    margin-top: 20px;
-    padding: 16px;
-    border: 2px solid #4c74be;
-    background-color: #023970;
-    border-radius:8px;
-    color:white;
-}
-.performance-grid{
-    display:grid;
-    grid-template-columns:1fr 1fr 1fr;
-    gap:15px;
-    margin-top:15px;
-}
-.metric-card{
-    padding:15px;
-    border:1px solid #4c74be;
+    border: 1px solid var(--border);
     border-radius: 8px;
-    background-color: #064780;
-    text-align: center;
-}
-.metric-card h3{
-    margin: 0;
-    font-size: 10px;
-}
-.metric-card p{
-    margin: 0;
-    font-size: 24px;
-    font-weight: bold;
+
+    background-color: var(--panel-light);
+    padding: 12px;
 }
 
-@media (max-width: 700px){
-    body{
-        margin: 150px 16px 24px;
+/* =========================================
+   PERFORMANCE CARDS
+========================================= */
+
+.performance-grid {
+    display: grid;
+
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+
+    gap: 12px;
+    margin-top: 15px;
+}
+
+.metric-card {
+    padding: 15px;
+
+    border: 1px solid var(--border);
+    border-radius: 8px;
+
+    background-color: var(--panel-light);
+    text-align: center;
+    min-width: 0;
+}
+
+.metric-card h3 {
+    margin: 0;
+    font-size: 12px;
+}
+
+.metric-card p {
+    margin: 8px 0 0;
+    font-size: 22px;
+    font-weight: bold;
+    overflow-wrap: anywhere;
+}
+
+
+/* =========================================
+   TRAFFIC GENERATOR
+========================================= */
+
+.traffic-controls {
+    display: flex;
+    flex-direction: column;
+    gap: 9px;
+}
+
+.traffic-controls p {
+    font-size: 18px;
+    font-weight: bold;
+    margin: 0 0 8px;
+}
+
+.traffic-controls button {
+    padding: 10px;
+
+    border: 1px solid var(--border);
+    border-radius: 6px;
+
+    background-color: var(--panel-light);
+    color: white;
+
+    font-weight: bold;
+    cursor: pointer;
+
+    transition: background-color 0.2s;
+}
+
+.traffic-controls button:hover {
+    background-color: #0960a5;
+}
+
+.traffic-controls button.stop {
+    background-color: #a51f35;
+    border-color: #dc3545;
+}
+
+.traffic-controls button.stop:hover {
+    background-color: #c6283d;
+}
+
+#traffic-status {
+    color: var(--accent);
+}
+
+
+/* =========================================
+   PERFORMANCE MONITORING CONTROLS
+========================================= */
+
+.monitoring-controls {
+    padding: 13px;
+
+    border: 1px solid var(--border);
+    border-radius: 8px;
+
+    background-color: var(--panel-light);
+    margin-bottom: 15px;
+}
+
+.monitoring-info {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    margin-bottom: 12px;
+}
+
+.monitoring-info span {
+    font-size: 13px;
+    color: var(--muted);
+}
+
+#next-test-status {
+    color: var(--accent);
+    font-size: 14px;
+    overflow-wrap: anywhere;
+}
+
+.monitoring-buttons {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+}
+
+.monitor-btn {
+    padding: 10px 7px;
+
+    border: 1px solid transparent;
+    border-radius: 6px;
+
+    color: white;
+    font-weight: bold;
+    font-size: 12px;
+
+    cursor: pointer;
+    transition: background-color 0.2s;
+}
+
+.monitor-btn.start {
+    background-color: #087b56;
+}
+
+.monitor-btn.start:hover:not(:disabled) {
+    background-color: #10a575;
+}
+
+.monitor-btn.stop {
+    background-color: #a51f35;
+}
+
+.monitor-btn.stop:hover:not(:disabled) {
+    background-color: #c6283d;
+}
+
+.monitor-btn.reset {
+    grid-column: 1 / -1;
+    background-color: #475f7c;
+}
+
+.monitor-btn.reset:hover:not(:disabled) {
+    background-color: #607d9e;
+}
+
+.monitor-btn:disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
+}
+
+
+/* =========================================
+   PERFORMANCE CHART
+========================================= */
+
+#performance-metric {
+    width: 100%;
+    padding: 9px;
+
+    background-color: var(--panel-light);
+    color: white;
+
+    border: 1px solid var(--border);
+    border-radius: 6px;
+}
+
+#performance-metric option {
+    background-color: var(--header);
+    color: white;
+}
+
+.chart-container {
+    position: relative;
+    width: 100%;
+    min-height: 220px;
+    margin-top: 15px;
+}
+
+#performance-chart {
+    max-width: 100%;
+}
+
+#performance-chart-status {
+    color: var(--muted);
+    font-size: 12px;
+}
+
+
+/* =========================================
+   RESPONSIVE LAYOUT
+========================================= */
+
+@media (max-width: 1250px) {
+
+    .dashboard-grid {
+        grid-template-columns:
+            minmax(200px, 0.8fr)
+            minmax(350px, 1.5fr);
     }
 
-    .app-header{
+    .node-panel {
+        grid-column: 1;
+        grid-row: 1;
+    }
+
+    .topology-panel {
+        grid-column: 2;
+        grid-row: 1 / span 2;
+    }
+
+    .monitoring-panel {
+        grid-column: 1 / -1;
+        grid-row: 2;
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        align-items: start;
+    }
+
+    #network {
+        height: 600px;
+    }
+}
+
+
+/* =========================================
+   TABLET AND MOBILE
+========================================= */
+
+@media (max-width: 850px) {
+
+    body {
+        margin: 140px 16px 24px;
+    }
+
+    .app-header {
         min-height: 68px;
         padding: 8px 14px;
     }
 
-    .app-logo{
+    .app-logo {
         width: 44px;
         height: 44px;
     }
 
-    .logo-text{
+    .logo-text {
         font-size: 16px;
     }
 
-    .sidebar{
+    .sidebar {
         top: 68px;
         width: 100%;
         height: auto;
+
         display: flex;
         flex-wrap: wrap;
         gap: 4px;
+
         padding: 6px 10px;
         border-radius: 0;
     }
 
-    .sidebar a{
+    .sidebar a {
         margin: 0;
         padding: 8px;
+    }
+
+    .dashboard-grid {
+        display: flex;
+        flex-direction: column;
+    }
+
+    .node-panel,
+    .topology-panel,
+    .monitoring-panel {
+        width: 100%;
+    }
+
+    .monitoring-panel {
+        display: flex;
+    }
+
+    #network {
+        height: 450px;
+    }
+}
+
+
+@media (max-width: 500px) {
+
+    body {
+        margin: 135px 10px 20px;
+    }
+
+    .logo-text {
+        font-size: 14px;
+    }
+
+    .key {
+        gap: 8px;
+        padding: 10px;
+    }
+
+    .summary-box {
+        flex-direction: column;
+        text-align: center;
+    }
+
+    .performance-grid {
+        grid-template-columns: 1fr;
+    }
+
+    #network {
+        height: 350px;
+    }
+
+    .monitoring-buttons {
+        grid-template-columns: 1fr;
+    }
+
+    .monitor-btn.reset {
+        grid-column: auto;
     }
 }
