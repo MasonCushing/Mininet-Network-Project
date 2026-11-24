@@ -1,109 +1,273 @@
+
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
     <title>Mininet Network Monitor</title>
 
-    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
-
+    <link rel="stylesheet"
+          href="{{ url_for('static', filename='style.css') }}">
 
     <script src="https://unpkg.com/cytoscape/dist/cytoscape.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </head>
 
 <body>
 
+<main class="network-page">
 
-    <main>
-        <div class = "network-page">
-            <header class="app-header">
-                <img src="{{ url_for('static', filename='icons/hexagonal-tech-logo.svg') }}" class="app-logo" alt="Network Monitor logo">
-                <h1 class = "logo-text">Network Monitor Intelligent Traffic Engineering and QoS</h1>
-            </header>
+    <!-- HEADER -->
+    <header class="app-header">
+        <img
+            src="{{ url_for('static', filename='icons/hexagonal-tech-logo.svg') }}"
+            class="app-logo"
+            alt="Network Monitor logo">
 
-            <nav class="sidebar" aria-label="Main navigation">
-                <a href="{{ url_for('index') }}" aria-current="page">Network Monitor</a>
-                <a href="{{ url_for('traffic_page') }}">Traffic Manager</a>
-                <a href="{{ url_for('qos_page') }}">QoS Configurations</a>
-            </nav>
+        <h1 class="logo-text">
+            Network Monitor
+        </h1>
 
-            <section class="network-section">
-                        <h2>Network Topology</h2>
-                        <div id="network"></div>
-                        <p id="network-status">Loading Topology...</p>
-            </section>
+        <span class="monitoring-status" id="monitoring-status">
+            Monitoring active
+        </span>
+    </header>
 
 
-            <div class="key">
-                <p class="Summary">Network Summary</p>
-            
-                <div class="summary-box">
-                    <img src="{{ url_for('static', filename='icons/host-device.svg') }}" class="host-img">
-                    <p class="host">Hosts: 57</p>
-                </div>
-            
-                <div class="summary-box">
-                    <img src="{{ url_for('static', filename='icons/router-icon.svg') }}" class="router-img">
-                    <p class="routers">Routers: 3</p>
-                </div>
-            
-                <div class="summary-box">
-                    <img src="{{ url_for('static', filename='icons/server-rack.svg') }}" class="switch-icon">
-                    <p class="Switches">Switches: 9</p>
-                </div>
+    <!-- NAVIGATION -->
+    <nav class="sidebar" aria-label="Main navigation">
+        <a href="{{ url_for('index') }}" aria-current="page">
+            Network Monitor
+        </a>
 
-                <div class="summary-box">
-                    <img src="{{ url_for('static', filename='icons/connected-devices-card.svg') }}" class="link-icons">
-                    <p class="links">Links: 65</p>
-                </div>
-            </div>
-            
+        <a href="{{ url_for('traffic_page') }}">
+            Traffic Manager
+        </a>
 
-            <div class = "network-performance"> 
-                <div class="traffic-controls">
-                    <p>Traffic Generator</p>
-                    <button class="traffic-btn" data-profile="voice">Voice (EF)</button>
-                    <button class="traffic-btn" data-profile="video">Video (AF41)</button>
-                    <button class="traffic-btn" data-profile="web">Web (Best Effort)</button>
-                    <button class="traffic-btn" data-profile="bulk">Bulk (CS1)</button>
-                    <button class="traffic-btn" data-profile="gaming">Gaming (CS5)</button>
-                    <button class="traffic-btn" data-profile="streaming">Streaming (AF31)</button>
-                    <button class="traffic-btn" data-profile="random">Random traffic (all switches)</button>
-                    <button class="traffic-btn stop" id="traffic-stop">Stop</button>
-                    <span id="traffic-status"></span>
-                </div>
-                <h2>Network Overall Performance</h2>
-                <div class="performance-grid">
-                    <div class="metric-card">
-                        <h3>Latency </h3>
-                        <p id="latency">Loading...</p>
-                    </div>
-                    <div class="metric-card">
-                        <h3>Packet Loss </h3>
-                        <p id="packet-loss">Loading...</p>
-                    </div>  
-                    <div class="metric-card">
-                        <h3>Throughput </h3>
-                        <p id="throughput">Loading...</p>
-                    </div>
+        <a href="{{ url_for('qos_page') }}">
+            QoS Configurations
+        </a>
+    </nav>
 
-                </div>
-                
+
+    <!-- DASHBOARD OVERVIEW -->
+    <section class="dashboard-overview">
+
+        <h2>Network Overview</h2>
+
+        <div class="summary-grid">
+
+            <div class="summary-card">
+                <span>Hosts</span>
+                <strong id="host-count">--</strong>
             </div>
 
-
-            <div class = "details-block">
-                <aside class="details-section">
-                    <h2>Node Details</h2>
-                    <p>Select a host, switch, or router to view its information.</p>
-                    <div id="stats-panel"></div>
-            
-                </aside>
+            <div class="summary-card">
+                <span>Routers</span>
+                <strong id="router-count">--</strong>
             </div>
+
+            <div class="summary-card">
+                <span>Switches</span>
+                <strong id="switch-count">--</strong>
+            </div>
+
+            <div class="summary-card">
+                <span>Links</span>
+                <strong id="link-count">--</strong>
+            </div>
+
         </div>
-    </main>
 
-    <script src="{{ url_for('static', filename='network.js') }}"></script>
+
+        <!-- PERFORMANCE SUMMARY -->
+        <h2>Overall Network Performance</h2>
+
+        <div class="performance-grid">
+
+            <div class="metric-card">
+                <h3>Latency</h3>
+                <p id="latency">-- ms</p>
+            </div>
+
+            <div class="metric-card">
+                <h3>Jitter</h3>
+                <p id="jitter">-- ms</p>
+            </div>
+
+            <div class="metric-card">
+                <h3>Packet Loss</h3>
+                <p id="packet-loss">--%</p>
+            </div>
+
+            <div class="metric-card">
+                <h3>Throughput</h3>
+                <p id="throughput">-- Mbps</p>
+            </div>
+
+        </div>
+
+    </section>
+
+
+    <!-- MAIN THREE-COLUMN DASHBOARD -->
+    <section class="dashboard-grid">
+
+
+        <!-- LEFT: NODE DETAILS -->
+        <aside class="dashboard-panel node-panel">
+
+            <h2>Node Details</h2>
+
+            <p class="panel-description">
+                Select a host, switch, or router from the topology.
+            </p>
+
+            <div id="stats-panel">
+                <p>No node selected.</p>
+            </div>
+
+        </aside>
+
+
+        <!-- CENTER: NETWORK TOPOLOGY -->
+        <section class="dashboard-panel topology-panel">
+
+            <h2>Network Topology</h2>
+
+            <div id="network"></div>
+
+            <p id="network-status">
+                Loading topology...
+            </p>
+
+            <div class="topology-legend">
+
+                <span>
+                    <i class="legend-host"></i>
+                    Host
+                </span>
+
+                <span>
+                    <i class="legend-router"></i>
+                    Router
+                </span>
+
+                <span>
+                    <i class="legend-switch"></i>
+                    Switch
+                </span>
+
+            </div>
+
+        </section>
+
+
+        <!-- RIGHT: TRAFFIC AND PERFORMANCE -->
+        <aside class="dashboard-panel monitoring-panel">
+
+            <h2>Traffic Generator</h2>
+
+            <div class="traffic-controls">
+
+                <button class="traffic-btn" data-profile="voice">
+                    Voice
+                </button>
+
+                <button class="traffic-btn" data-profile="video">
+                    Video
+                </button>
+
+                <button class="traffic-btn" data-profile="web">
+                    Web
+                </button>
+
+                <button class="traffic-btn" data-profile="bulk">
+                    Bulk
+                </button>
+
+                <button class="traffic-btn" data-profile="gaming">
+                    Gaming
+                </button>
+
+                <button class="traffic-btn" data-profile="streaming">
+                    Streaming
+                </button>
+
+                <button class="traffic-btn"
+                        data-profile="random">
+                    Random Traffic
+                </button>
+
+                <button class="traffic-btn stop" id="traffic-stop">
+                    Stop Traffic
+                </button>
+
+                <p id="traffic-status">
+                    Traffic generator idle.
+                </p>
+
+            </div>
+
+            <hr>
+            
+            <h2>Performance History</h2>
+
+            <div class="monitoring-controls">
+
+                <div class="monitoring-info">
+                    <span>Automatic Monitoring</span>
+                    <strong id="next-test-status">Stopped</strong>
+                </div>
+
+                <div class="monitoring-buttons">
+
+                    <button id="start-monitoring" class="monitor-btn start">
+                        Start Monitoring
+                    </button>
+
+                    <button id="stop-monitoring" class="monitor-btn stop" disabled>
+                        Stop Monitoring
+                    </button>
+
+                    <button id="reset-history" class="monitor-btn reset">
+                        Reset History
+                    </button>
+
+                </div>
+
+            </div>
+
+            <label for="performance-metric">
+                Display metric
+            </label>
+
+            <select id="performance-metric">
+                <option value="latency">Latency (ms)</option>
+                <option value="jitter">Jitter (ms)</option>
+                <option value="packet_loss">Packet Loss (%)</option>
+                <option value="throughput">Throughput (Mbps)</option>
+            </select>
+
+            <div class="chart-container">
+                <canvas id="performance-chart"></canvas>
+            </div>
+
+            <p id="performance-chart-status">
+                No performance measurements loaded.
+            </p>
+
+
+        </aside>
+
+    </section>
+
+</main>
+
+
+<script src="{{ url_for('static', filename='network.js') }}"></script>
 
 </body>
 </html>
