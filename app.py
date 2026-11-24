@@ -10,9 +10,18 @@ import threading
 performance_lock = threading.Lock()
 from routing import (shortest_path, least_cost_path)
 current_routing_algorithm = 'shortest_path'  
+import database
 
 app = Flask(__name__, template_folder='Gui', static_folder='Styling')
-app.secret_key = os.environ.get('NETWORK_MONITOR_SECRET_KEY', os.urandom(32))
+database.initialize_database()
+secret_key = os.environ.get('NETWORK_MONITOR_SECRET_KEY')
+
+if not secret_key:
+    raise RuntimeError(
+        "Set NETWORK_MONITOR_SECRET_KEY before starting the application"
+    )
+
+app.secret_key = secret_key
 
 net = None
 
@@ -98,14 +107,36 @@ def gui_asset(filename):
 
 @app.route('/api/topology')
 def topology():
+    if net is None:
+        return jsonify({
+            'error': 'Network is not running'
+        }), 503
+
     return jsonify(get_topology())
 
-@app.route('/api/stats/<name>') 
+@app.route('/api/stats/<name>')
 def node_stats(name):
+    if net is None:
+        return jsonify({
+            'error': 'Network is not running'
+        }), 503
+
     node = net.nameToNode.get(name)
-    if node is None or node not in net.hosts: # switches have no snmp agent
-        return jsonify({'error': f'no snmp agent on {name}'}), 404
-    return jsonify(snmp_monitor.get_node_stats(node))
+
+    if node is None or node not in net.hosts:
+        return jsonify({
+            'error': f'No SNMP agent on {name}'
+        }), 404
+
+    try:
+        return jsonify(snmp_monitor.get_node_stats(node))
+    except Exception:
+        app.logger.exception(
+            "SNMP statistics retrieval failed"
+        )
+        return jsonify({
+            'error': 'Unable to retrieve node statistics'
+        }), 500
 
 @app.route('/api/traffic/stop', methods=['POST'])
 def traffic_stop():
@@ -124,46 +155,286 @@ def traffic_start(profile):
     traffic_controller.start_traffic(net, profile)
     return jsonify({'status': 'started', 'profile': profile})
 
-@app.route('/api/route')
+
+
+@app.route('/api/route', methods=['GET', 'POST'])
 def route():
-    source = 'h1'
-    target = 'h54'
+    if net is None:
+        return jsonify({
+            'error': 'Network is not running'
+        }), 503
+
+    data = request.get_json(silent=True) or {}
+
+    source = data.get(
+        'source', request.args.get('source', 'h1')
+    )
+
+    target = data.get(
+        'target', request.args.get('target', 'h54')
+    )
+
+    algorithm = data.get(
+        'algorithm',
+        request.args.get('algorithm', 'both')
+    )
+
+    hosts = {host.name for host in net.hosts}
+
+    if source not in hosts or target not in hosts:
+        return jsonify({
+            'error': 'Invalid source or destination'
+        }), 400
+
+    if source == target:
+        return jsonify({
+            'error': 'Source and destination must differ'
+        }), 400
+
+    if algorithm not in ('bfs', 'dijkstra', 'both'):
+        return jsonify({
+            'error': 'Invalid routing algorithm'
+        }), 400
+
     try:
-        shortest = shortest_path(net, source, target)
-    except Exception as e:
-        shortest = []
-        print(f"Error calculating shortest path:", repr(e))
+        results = {
+            'source': source,
+            'target': target,
+            'algorithm': algorithm
+        }
+
+        if algorithm in ('bfs', 'both'):
+            path = shortest_path(net, source, target)
+
+            results['shortest_path'] = path
+            results['shortest_hops'] = (
+                len(path) - 1 if path else None
+            )
+
+        if algorithm in ('dijkstra', 'both'):
+            path = least_cost_path(net, source, target)
+
+            results['least_cost_path'] = path
+            results['least_cost_hops'] = (
+                len(path) - 1 if path else None
+            )
+
+        database.add_event(
+            severity='INFO',
+            event_type='ROUTING',
+            message=(
+                f'{algorithm.upper()} route calculated: '
+                f'{source} -> {target}'
+            )
+        )
+
+        return jsonify(results)
+
+    except Exception:
+        app.logger.exception(
+            "Routing calculation failed"
+        )
+
+        return jsonify({
+            'error': 'Unable to calculate route'
+        }), 500
+
+
+@app.route('/api/performance', methods=['GET', 'POST'])
+def get_performance():
+    if net is None:
+        return jsonify({'error': 'Network is not running'}), 503
+
+    data = request.get_json(silent=True) or {}
+
+    source = data.get(
+        'source', request.args.get('source', 'h1')
+    )
+
+    target = data.get(
+        'target', request.args.get('target', 'h2')
+    )
+
+    duration = data.get('duration', 3)
+
+    hosts = {host.name for host in net.hosts}
+
+    if source not in hosts or target not in hosts:
+        return jsonify({'error': 'Invalid host selection'}), 400
+
+    if source == target:
+        return jsonify({'error': 'Hosts must be different'}), 400
+
+    if type(duration) is not int or not 1 <= duration <= 30:
+        return jsonify({
+            'error': 'Duration must be an integer between 1 and 30'
+        }), 400
+
+    if not performance_lock.acquire(blocking=False):
+        return jsonify({
+            'error': 'Performance measurement already running'
+        }), 409
+
     try:
-        least_traffic = least_cost_path(net, source, target)
-    except Exception as e:
-        least_traffic = []
-        print(f"Error calculating least traffic path:", repr(e))
+        host1 = net.get(source)
+        host2 = net.get(target)
+
+        latency, jitter, packet_loss = measure_ping(
+            host1, host2, count=10
+        )
+
+        throughput = measure_throughput(
+            host1, host2, duration=duration
+        )
+
+        database.add_performance(
+            source=source,
+            target=target,
+            latency=latency,
+            jitter=jitter,
+            packet_loss=packet_loss,
+            throughput=throughput,
+            duration=duration
+        )
+
+        database.add_event(
+            severity="INFO",
+            event_type="PERFORMANCE",
+            message=f"Performance test completed: {source} -> {target}"
+        )
+
+        return jsonify({
+            'source': source,
+            'target': target,
+
+            'latency': latency,
+            'jitter': jitter,
+            'packet_loss': packet_loss,
+            'throughput': throughput,
+
+            'latency_unit': 'ms',
+            'jitter_unit': 'ms',
+            'packet_loss_unit': '%',
+            'throughput_unit': 'Mbps',
+
+            'duration': duration
+        })
+
+    except Exception:
+        app.logger.exception("Performance test failed")
+        return jsonify({'error': 'Performance test failed'}), 500
+
+    finally:
+        performance_lock.release()
+
+
+@app.route('/api/performance/history')
+def performance_history():
+    limit = request.args.get(
+        'limit', default=100, type=int
+    )
+
+    if limit is None or not 1 <= limit <= 1000:
+        return jsonify({
+            'error': 'Limit must be between 1 and 1000'
+        }), 400
+
+    try:
+        history = database.get_performance_history(limit)
+
+        return jsonify({
+            'count': len(history),
+            'results': history
+        })
+
+    except Exception:
+        app.logger.exception(
+            "Unable to retrieve performance history"
+        )
+
+        return jsonify({
+            'error': 'Unable to retrieve performance history'
+        }), 500
+
+@app.route('/api/performance/history/reset', methods=['POST'])
+def reset_performance_history():
+    try:
+        database.reset_performance_history()
+
+        database.add_event(
+            severity="INFO",
+            event_type="PERFORMANCE",
+            message="Performance history was reset"
+        )
+
+        return jsonify({
+            'status': 'success',
+            'message': 'Performance history reset successfully'
+        })
+
+    except Exception:
+        app.logger.exception("History reset failed")
+
+        return jsonify({
+            'error': 'Unable to reset performance history'
+        }), 500
+
+@app.route('/api/summary')
+def network_summary():
+    if net is None:
+        return jsonify({
+            'error': 'Network is not running'
+        }), 503
+
+    hosts = net.hosts
+    switches = net.switches
+    routers = [
+        node for node in hosts
+        if get_node_type(node.name) == 'router'
+    ]
+
+    actual_hosts = [
+        node for node in hosts
+        if get_node_type(node.name) == 'host'
+    ]
+
     return jsonify({
-        "algorithms": ["BFS", "Dijkstra"],
-        "source": source,
-        "target": target,
-        "shortest_path": shortest,
-        "shortest_hops": max(0, len(shortest) - 1),
-        "least_traffic_path": least_traffic,
-        "least_traffic_hops": max(0, len(least_traffic) - 1)
+        'hosts': len(actual_hosts),
+        'routers': len(routers),
+        'switches': len(switches),
+        'links': len(net.links)
     })
 
-@app.route('/api/performance')
-def get_performance():
-  if not performance_lock.acquire(blocking=False):
-    return jsonify({'latency': None, 'packet-loss': None, 'throughput': None, 'error': 'Performance measurement in progress'})
-  try:
-    h1 = net.get('h1')
-    h2 = net.get('h2')
-    latency, packet_loss = measure_ping(h1, h2)
-    throughput = measure_throughput(h1, h2)
+
+@app.route('/api/events')
+def events():
+    limit = request.args.get('limit', default=100, type=int)
+
+    if limit is None or not 1 <= limit <= 500:
+        return jsonify({'error': 'Limit must be between 1 and 500'}), 400
+
+    return jsonify(database.get_events(limit))
+
+@app.route('/api/devices')
+def devices():
+    if net is None:
+        return jsonify({
+            'error': 'Network is not running'
+        }), 503
+
+    results = []
+
+    for node in net.hosts + net.switches:
+        results.append({
+            'name': node.name,
+            'type': get_node_type(node.name),
+            'status': 'configured'
+        })
+
     return jsonify({
-         'latency': latency,
-         'packet-loss': packet_loss,
-         'throughput': throughput
-     })
-  finally:
-        performance_lock.release()
+        'total': len(results),
+        'devices': results
+    })
 
 if __name__ == '__main__':
     setLogLevel('info')
